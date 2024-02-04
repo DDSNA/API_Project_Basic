@@ -99,20 +99,25 @@ async def ping(website: str = "eve.danserban.ro"):
 
 
 @app.post("/new-update")
-async def new_update(title:str = "Dick raiser is coming", message:str = "For your ass"):
+async def new_update(title:str = "Update regarding database!", message:str = "The database is currently running a new "
+                                                                             "update entry"):
     """
     When a new update rolls out, inform the discord bot
-    :param update:
-                    title: str
-                    message: str
-                    updateTime: datetime
+    :param title: Title of discord post
+    :param message: Body of discord post
     :return:
     """
     webhook_url = ("https://discord.com/api/webhooks/1203826362918375544/UWV5Rkp4E-Yar2znY"
                    "-l50At_QQ_WSMEHrhO4Woyoc47A7g5LpmgbHInL0lyyuA3lOLOw")
     headers = {"Content-Type": "application/json"}
     updateTime = datetime.now().isoformat()
-    update = {"title": title, "message": message, "updateTime": updateTime}
+    message = message + "\n" + updateTime
+    update = {
+        "embeds":
+            [
+                {"title": title, "description": message}
+            ]
+    }
     async with httpx.AsyncClient() as client:
         response = await client.post(webhook_url, headers=headers, json=update)
     return response.status_code
