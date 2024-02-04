@@ -13,6 +13,7 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, WebSocketException, status, Response
 from fastapi.openapi.utils import get_openapi
 
+
 app = FastAPI()
 
 logger = logging.getLogger(__name__)
@@ -63,13 +64,24 @@ async def say_hello(name: str):
 
 
 @app.get("/prun/update/database")
-async def update_database(request_type: str = "update db"):
-    link_prun_db_cloudfunction_update = "https://us-central1-prun-409500.cloudfunctions.net/prun_orders"
+async def update_database(request_json: str = '{"type":"update db"}',
+                          cloud_function_url: str = "https://us-central1-prun-409500.cloudfunctions.net/prun_orders"
+                          ):
+    """
+    This function was retired due to budget restrictions, but it is functional if provided a cloud function as
+    an argument for calling
+    :param request_json: custom key, json formatted string
+    :param cloud_function_url:
+    :return:
+    """
+    link_prun_db_cloudfunction_update = cloud_function_url
     try:
         async with httpx.AsyncClient(timeout=720.30) as client:
-            response = await client.post(link_prun_db_cloudfunction_update, json={"type": request_type})
+
+            response = await client.post(link_prun_db_cloudfunction_update, json=request_json)
             if response.headers['Content-Type'] == 'application/json':
                 response_json = response.json()
+                return response_json
             else:
                 raise HTTPException(status_code=500, detail="Response is not JSON")
     except HTTPException as e:
@@ -84,6 +96,26 @@ async def ping(website: str = "eve.danserban.ro"):
         return {"status": r.status_code}
     except Exception as e:
         return {"error": str(e)}
+
+
+@app.post("/new-update")
+async def new_update(title:str = "Dick raiser is coming", message:str = "For your ass"):
+    """
+    When a new update rolls out, inform the discord bot
+    :param update:
+                    title: str
+                    message: str
+                    updateTime: datetime
+    :return:
+    """
+    webhook_url = ("https://discord.com/api/webhooks/1203826362918375544/UWV5Rkp4E-Yar2znY"
+                   "-l50At_QQ_WSMEHrhO4Woyoc47A7g5LpmgbHInL0lyyuA3lOLOw")
+    headers = {"Content-Type": "application/json"}
+    updateTime = datetime.now().isoformat()
+    update = {"title": title, "message": message, "updateTime": updateTime}
+    async with httpx.AsyncClient() as client:
+        response = await client.post(webhook_url, headers=headers, json=update)
+    return response.status_code
 
 
 @app.get("/prun_update_all", status_code=status.HTTP_202_ACCEPTED)
@@ -139,7 +171,7 @@ async def save_current_prun_orders_volume(response: Response):
                 dataframe = pd.read_csv(data)
                 print(dataframe.head())
                 # serialize into string for easier archivation and later parsing down the road
-                dataframe_string = dataframe.to_string()
+                dataframe_string = dataframe.to_html()
                 data = [[destination_filename, dataframe_string]]
                 dataframe = pd.DataFrame(data, columns=['csv_filename', 'csv_content'])
                 print(dataframe)
