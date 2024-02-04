@@ -1,3 +1,4 @@
+import os
 from datetime import datetime
 from io import StringIO
 import pandas as pd
@@ -5,7 +6,7 @@ import sqlalchemy
 
 from fastapi import FastAPI, HTTPException, WebSocketException
 import httpx
-from pythonping import ping
+from dotenv import load_dotenv
 
 app = FastAPI()
 
@@ -67,6 +68,14 @@ async def save_current_prun_orders_volume():
                     '/csv/workforce']
 
     async def download_csv():
+        load_dotenv(dotenv_path=".env")
+        user = os.getenv("DB_INSERT_USERNAME")
+        password = os.getenv("DB_INSERT_USERNAME_PASSWORD")
+        hostname = os.getenv("DB_HOST")
+        database = os.getenv("DB_INSERT_DATABASE")
+        port = os.getenv("DB_PORT")
+
+        engine = sqlalchemy.create_engine(f'postgresql+psycopg2://{user}:{password}@{hostname}:{port}/{database}')
         for api_root in api_csv_list:
             api_link = "https://rest.fnar.net"
             called_api_link = f"{api_link}{api_root}"
@@ -79,8 +88,10 @@ async def save_current_prun_orders_volume():
                 # only proceed if the api works!
                 current_time = datetime.now().strftime("%d-m-%Y-%H-%M")
                 data = StringIO(result.text)
-                destination_filename= f"{current_time}-{api_name}.csv"
+                destination_filename = f"{current_time}-{api_name}.csv"
                 dataframe = pd.read_csv(data)
                 print(dataframe.head())
-                #TODO: continue saving locally the files that are needed
+                # TODO: continue saving locally the files that are needed
+                dataframe.to_sql(name="prun.temporary_csv_hold", con=engine, schema="prun",if_exists="append")
+
     await download_csv()
