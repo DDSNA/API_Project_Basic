@@ -58,13 +58,11 @@ async def ping(website: str = "eve.danserban.ro"):
         return {"error": str(e)}
 
 
-@app.get("/prun_bids", status_code=status.HTTP_202_ACCEPTED)
+@app.get("/prun_update_all", status_code=status.HTTP_202_ACCEPTED)
 async def save_current_prun_orders_volume():
     """
     This function helps in saving ALL current prun orders in a PostgreSQL database. Check with administrator for an
     export or api endpoint for accessing that data.
-
-    :return:
     """
     api_csv_list = ['/csv/buildings',
                     '/csv/buildingcosts',
@@ -126,10 +124,10 @@ async def save_current_prun_orders_volume():
             else:
                 logger.error(f"Investigate error during API call (non-200 answer from source) {called_api_link}")
 
-            return status.HTTP_201_CREATED
+            return
     try:
         await download_csv()
-        return {"status": 200}
+        return status.HTTP_201_CREATED
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
         raise HTTPException(status_code=500, detail=str(e))
