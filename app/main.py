@@ -153,8 +153,6 @@ async def save_current_prun_orders_volume(response: Response):
             else:
                 logger.error(f"Investigate error during API call (non-200 answer from source) {called_api_link}")
 
-            return status.HTTP_201_CREATED
-
     try:
         await download_csv()
         return status.HTTP_200_OK
