@@ -10,7 +10,7 @@ import pandas as pd
 import sqlalchemy
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, WebSocketException
+from fastapi import FastAPI, HTTPException, WebSocketException, status
 
 app = FastAPI()
 
@@ -58,7 +58,7 @@ async def ping(website: str = "eve.danserban.ro"):
         return {"error": str(e)}
 
 
-@app.get("/prun_bids")
+@app.get("/prun_bids", status_code=status.HTTP_202_ACCEPTED)
 async def save_current_prun_orders_volume():
     api_csv_list = ['/csv/buildings',
                     '/csv/buildingcosts',
@@ -120,10 +120,10 @@ async def save_current_prun_orders_volume():
             else:
                 logger.error(f"Investigate error during API call (non-200 answer from source) {called_api_link}")
 
-            return {}
+            return status.HTTP_201_CREATED
     try:
         await download_csv()
-
+        return {"status": 200}
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
         raise HTTPException(status_code=500, detail=str(e))
