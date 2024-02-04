@@ -1,6 +1,7 @@
 from datetime import datetime
 from io import StringIO
 import pandas as pd
+import sqlalchemy
 
 from fastapi import FastAPI, HTTPException, WebSocketException
 import httpx
