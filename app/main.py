@@ -1,18 +1,31 @@
+# Standard library imports
 import os
 from datetime import datetime
 from io import StringIO
+import logging
+import psycopg2
+
+# Third-party imports
 import pandas as pd
 import sqlalchemy
-
-from fastapi import FastAPI, HTTPException, WebSocketException
 import httpx
 from dotenv import load_dotenv
+from fastapi import FastAPI, HTTPException, WebSocketException
 
 app = FastAPI()
 
+logger = logging.getLogger(__name__)
+logger.setLevel(logging.INFO)
+handler = logging.FileHandler("log.log")
+handler.setLevel(logging.INFO)
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+handler.setFormatter(formatter)
+logger.addHandler(handler)
+logger.info("Logging started")
 
 @app.get("/")
 async def root():
+    logger.info(f" request / endpoint!")
     return {"message": "Hello World"}
 
 
@@ -71,27 +84,52 @@ async def save_current_prun_orders_volume():
         load_dotenv(dotenv_path=".env")
         user = os.getenv("DB_INSERT_USERNAME")
         password = os.getenv("DB_INSERT_USERNAME_PASSWORD")
-        hostname = os.getenv("DB_HOST")
+        hostname = os.getenv("DB_HOSTNAME")
         database = os.getenv("DB_INSERT_DATABASE")
         port = os.getenv("DB_PORT")
 
+        logger.info(f"Connecting to {hostname}:{port} with: {user} and {password}")
         engine = sqlalchemy.create_engine(f'postgresql+psycopg2://{user}:{password}@{hostname}:{port}/{database}')
         for api_root in api_csv_list:
             api_link = "https://rest.fnar.net"
             called_api_link = f"{api_link}{api_root}"
-            async with httpx.AsyncClient() as client:
+            logger.info(f"API link: {called_api_link}")
+            async with httpx.AsyncClient(timeout=360) as client:
                 result = await client.get(called_api_link)
 
             if result.status_code == 200:
                 api_name = api_root.replace('/csv/', '')
 
                 # only proceed if the api works!
-                current_time = datetime.now().strftime("%d-m-%Y-%H-%M")
+                current_time = datetime.now().strftime("%d-%m-%Y-%H-%M")
                 data = StringIO(result.text)
                 destination_filename = f"{current_time}-{api_name}.csv"
                 dataframe = pd.read_csv(data)
                 print(dataframe.head())
                 # TODO: continue saving locally the files that are needed
-                dataframe.to_sql(name="prun.temporary_csv_hold", con=engine, schema="prun",if_exists="append")
+                dataframe_string = dataframe.to_string()
+                data = [[destination_filename, dataframe_string]]
+                dataframe = pd.DataFrame(data, columns=['csv_filename', 'csv_content'])
+                print(dataframe)
+                print(dataframe.shape)
+                try:
+                    dataframe.to_sql(name="temporary_csv_hold", con=engine, schema="prun", if_exists="append", index=False)
+                except Exception as error:
+                    logger.error(f"Error while uploading to database for {destination_filename}, {error}")
+                    pass
+            else:
+                logger.error(f"Investigate error during API call (non-200 answer from source) {called_api_link}")
 
-    await download_csv()
+            return {}
+    try:
+        await download_csv()
+
+    except HTTPException as e:
+        logger.error(f"Error downloading file, {e} occured!")
+        raise HTTPException(status_code=500, detail=str(e))
+    except WebSocketException as e:
+        logger.error(f"Error downloading file, {e} occured!")
+        raise WebSocketException(code=501, reason=str(e))
+    except Exception as e:
+        logger.error(f"Encountered exception {e}")
+        raise Exception
