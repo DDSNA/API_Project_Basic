@@ -10,7 +10,8 @@ import pandas as pd
 import sqlalchemy
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, WebSocketException, status
+from fastapi import FastAPI, HTTPException, WebSocketException, status, Response
+from fastapi.openapi.utils import get_openapi
 
 app = FastAPI()
 
@@ -22,6 +23,33 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.info("Logging started")
+
+
+### OPEN API SCHEMA CUSTOMIZATION
+def custom_openapi():
+    if app.openapi_schema:
+        return app.openapi_schema
+    openapi_schema = get_openapi(
+        title="DDSNA Data Engineering Portofolio API",
+        version="0.1.8",
+        summary="""Thank you for visiting my portofolio project.
+                The schema for my little PrUn ML project. PostgreSQL saving and processing included (and planned)!""",
+        description="""
+        As mentioned the schema is for personal use. If you wish to access the database feel free to reach out
+        to the development team (email here!). The code is not opensource at the moment.
+        Currently the data is saved as a string from a dataframe for all csv endpoints of https://doc.fnar.net.
+        Only through their graceful contribution were my skills honed and possible at all, so I thank them and you should too!""",
+        routes=app.routes,
+    )
+    openapi_schema["info"]["x-logo"] = {
+        "url": "https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png"
+    }
+    app.openapi_schema = openapi_schema
+    return app.openapi_schema
+
+
+app.openapi = custom_openapi
+
 
 @app.get("/")
 async def root():
@@ -59,7 +87,7 @@ async def ping(website: str = "eve.danserban.ro"):
 
 
 @app.get("/prun_update_all", status_code=status.HTTP_202_ACCEPTED)
-async def save_current_prun_orders_volume():
+async def save_current_prun_orders_volume(response: Response):
     """
     This function helps in saving ALL current prun orders in a PostgreSQL database. Check with administrator for an
     export or api endpoint for accessing that data.
@@ -117,7 +145,8 @@ async def save_current_prun_orders_volume():
                 print(dataframe)
                 print(dataframe.shape)
                 try:
-                    dataframe.to_sql(name="temporary_csv_hold", con=engine, schema="prun", if_exists="append", index=False)
+                    dataframe.to_sql(name="temporary_csv_hold", con=engine, schema="prun", if_exists="append",
+                                     index=False)
                 except Exception as error:
                     logger.error(f"Error while uploading to database for {destination_filename}, {error}")
                     pass
@@ -125,15 +154,19 @@ async def save_current_prun_orders_volume():
                 logger.error(f"Investigate error during API call (non-200 answer from source) {called_api_link}")
 
             return status.HTTP_201_CREATED
+
     try:
         await download_csv()
         return status.HTTP_200_OK
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         raise HTTPException(status_code=500, detail=str(e))
     except WebSocketException as e:
         logger.error(f"Error downloading file, {e} occured!")
-        raise WebSocketException(code=501, reason=str(e))
+        response.status_code = status.HTTP_502_BAD_GATEWAY
+        raise WebSocketException(code=502, reason=str(e))
     except Exception as e:
-        logger.error(f"Encountered exception {e}")
+        logger.error(f"Encountered unknown exception {e}")
+        response.status_code = status.HttpStatus.INTERNAL_SERVER_ERROR
         raise Exception
