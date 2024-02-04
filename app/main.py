@@ -13,7 +13,6 @@ from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, WebSocketException, status, Response
 from fastapi.openapi.utils import get_openapi
 
-
 app = FastAPI()
 
 logger = logging.getLogger(__name__)
@@ -99,8 +98,9 @@ async def ping(website: str = "eve.danserban.ro"):
 
 
 @app.post("/new-update")
-async def new_update(title:str = "Update regarding database!", message:str = "The database is currently running a new "
-                                                                             "update entry"):
+async def new_update(title: str = "Update regarding database!",
+                     message: str = "The database is currently running a new "
+                                    "update entry"):
     """
     When a new update rolls out, inform the discord bot
     :param title: Title of discord post
@@ -193,7 +193,8 @@ async def save_current_prun_orders_volume(response: Response):
     try:
         await download_csv()
         with httpx.AsyncClient() as client:
-            result = await client.post('http://localhost:8000/new-update')
+            result = await client.post('http://localhost:8000/new-update?title=Update%20regarding%20database%21'
+                                       '&message=The%20database%20is%20currently%20running%20a%20new%20update%20entry')
             logger.info(result.status_code)
         return status.HTTP_200_OK
     except HTTPException as e:
