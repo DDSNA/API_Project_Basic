@@ -110,7 +110,7 @@ async def new_update(title:str = "Update regarding database!", message:str = "Th
     webhook_url = ("https://discord.com/api/webhooks/1203826362918375544/UWV5Rkp4E-Yar2znY"
                    "-l50At_QQ_WSMEHrhO4Woyoc47A7g5LpmgbHInL0lyyuA3lOLOw")
     headers = {"Content-Type": "application/json"}
-    updateTime = datetime.now().isoformat()
+    updateTime = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
     message = message + "\n" + updateTime
     update = {
         "embeds":
@@ -192,6 +192,9 @@ async def save_current_prun_orders_volume(response: Response):
 
     try:
         await download_csv()
+        with httpx.AsyncClient() as client:
+            result = await client.post('http://localhost:8000/new-update')
+            logger.info(result.status_code)
         return status.HTTP_200_OK
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
