@@ -60,6 +60,12 @@ async def ping(website: str = "eve.danserban.ro"):
 
 @app.get("/prun_bids", status_code=status.HTTP_202_ACCEPTED)
 async def save_current_prun_orders_volume():
+    """
+    This function helps in saving ALL current prun orders in a PostgreSQL database. Check with administrator for an
+    export or api endpoint for accessing that data.
+
+    :return:
+    """
     api_csv_list = ['/csv/buildings',
                     '/csv/buildingcosts',
                     '/csv/buildingworkforces',
