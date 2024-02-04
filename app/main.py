@@ -124,10 +124,10 @@ async def save_current_prun_orders_volume():
             else:
                 logger.error(f"Investigate error during API call (non-200 answer from source) {called_api_link}")
 
-            return
+            return status.HTTP_201_CREATED
     try:
         await download_csv()
-        return status.HTTP_201_CREATED
+        return status.HTTP_200_OK
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
         raise HTTPException(status_code=500, detail=str(e))
