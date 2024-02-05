@@ -228,5 +228,5 @@ async def save_current_prun_orders_volume(response: Response):
         raise WebSocketException(code=502, reason=str(e))
     except Exception as e:
         logger.error(f"Encountered unknown exception {e}")
-        response.status_code = status.HttpStatus.INTERNAL_SERVER_ERROR
+        response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         raise Exception
