@@ -1,6 +1,6 @@
 # Standard library imports
 import os
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 from io import StringIO
 import logging
 import psycopg2
@@ -174,16 +174,36 @@ async def save_current_prun_orders_volume(response: Response):
                 data = StringIO(result.text)
                 destination_filename = f"{current_time}-{api_name}.csv"
                 dataframe = pd.read_csv(data)
+                pandas_type_dataframe = dataframe
+                #optional but in use now for my own purposes
+                timezone_gmt_plus_two = timezone(timedelta(hours=+2))
+                pandas_type_dataframe["collection_timestamp"] = datetime.now(tz=timezone_gmt_plus_two)
                 print(dataframe.head())
                 # serialize into string for easier archivation and later parsing down the road
+                # currently keeping it in html because CSV had massive problems
                 dataframe_string = dataframe.to_html()
-                data = [[destination_filename, dataframe_string]]
-                dataframe = pd.DataFrame(data, columns=['csv_filename', 'csv_content'])
+                data = [
+                    [destination_filename,
+                     dataframe_string]
+                ]
+                dataframe = pd.DataFrame(data,
+                                         columns=['csv_filename', 'csv_content']
+                                         )
                 print(dataframe)
                 print(dataframe.shape)
                 try:
-                    dataframe.to_sql(name="temporary_csv_hold", con=engine, schema="prun", if_exists="append",
-                                     index=False)
+                    dataframe.to_sql(
+                        name="temporary_csv_hold",
+                        con=engine, schema="prun",
+                        if_exists="append",
+                        index=False
+                    )
+                    pandas_type_dataframe.to_sql(
+                        name=f"temporary_df_hold_{api_name}",
+                        con=engine, schema="prun_data",
+                        if_exists="append",
+                        index=False
+                    )
                 except Exception as error:
                     logger.error(f"Error while uploading to database for {destination_filename}, {error}")
                     pass
@@ -192,10 +212,10 @@ async def save_current_prun_orders_volume(response: Response):
 
     try:
         await download_csv()
-        with httpx.AsyncClient() as client:
-            result = await client.post('http://localhost:8000/new-update?title=Update%20regarding%20database%21'
-                                       '&message=The%20database%20is%20currently%20running%20a%20new%20update%20entry')
-            logger.info(result.status_code)
+        # with httpx.AsyncClient() as client:
+        #     result = await client.post('http://localhost:8000/new-update?title=Update%20regarding%20database%21'
+        #                                '&message=The%20database%20is%20currently%20running%20a%20new%20update%20entry')
+        #     logger.info(result.status_code)
         return status.HTTP_200_OK
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
