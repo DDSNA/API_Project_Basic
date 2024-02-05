@@ -4,7 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="983fa5d4-88a7-4442-922c-7f5529b9845b" name="Changes" comment="help idk what I did here">
+    <list default="true" id="983fa5d4-88a7-4442-922c-7f5529b9845b" name="Changes" comment="fixed localhost link bug">
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
@@ -189,7 +189,8 @@
       <workItem from="1707122587855" duration="1176000" />
       <workItem from="1707130352323" duration="1627000" />
       <workItem from="1707136368000" duration="1886000" />
-      <workItem from="1707145569374" duration="293000" />
+      <workItem from="1707145569374" duration="440000" />
+      <workItem from="1707162132988" duration="280000" />
     </task>
     <task id="LOCAL-00001" summary="Dockerfile">
       <option name="closed" value="true" />
@@ -391,7 +392,15 @@
       <option name="project" value="LOCAL" />
       <updated>1707139386167</updated>
     </task>
-    <option name="localTasksCounter" value="26" />
+    <task id="LOCAL-00026" summary="fixed localhost link bug">
+      <option name="closed" value="true" />
+      <created>1707145890230</created>
+      <option name="number" value="00026" />
+      <option name="presentableId" value="LOCAL-00026" />
+      <option name="project" value="LOCAL" />
+      <updated>1707145890230</updated>
+    </task>
+    <option name="localTasksCounter" value="27" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -424,7 +433,8 @@
     <MESSAGE value="uncommented hook" />
     <MESSAGE value="workspace xml upload" />
     <MESSAGE value="help idk what I did here" />
-    <option name="LAST_COMMIT_MESSAGE" value="help idk what I did here" />
+    <MESSAGE value="fixed localhost link bug" />
+    <option name="LAST_COMMIT_MESSAGE" value="fixed localhost link bug" />
   </component>
   <component name="com.intellij.coverage.CoverageDataManagerImpl">
     <SUITE FILE_PATH="coverage/API_Project_Basic$API_Project_Basic.coverage" NAME="API_Project_Basic Coverage Results" MODIFIED="1707137160741" SOURCE_PROVIDER="com.intellij.coverage.DefaultCoverageFileProvider" RUNNER="coverage.py" COVERAGE_BY_TEST_ENABLED="true" COVERAGE_TRACING_ENABLED="false" WORKING_DIRECTORY="" />
