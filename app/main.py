@@ -216,6 +216,7 @@ async def save_current_prun_orders_volume(response: Response):
             result = await client.post('http://localhost:8000/new-update?title=Update%20regarding%20database%21'
                                        '&message=The%20database%20is%20currently%20running%20a%20new%20update%20entry')
             logger.info(result.status_code)
+            client.aclose()
         return status.HTTP_200_OK
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
