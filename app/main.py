@@ -220,13 +220,23 @@ async def save_current_prun_orders_volume(response: Response):
 
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
+        async with httpx.AsyncClient() as client:
+            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
+                                       '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and%20failed')
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
+        logger.info(result.status_code)
         raise HTTPException(status_code=500, detail=str(e))
     except WebSocketException as e:
         logger.error(f"Error downloading file, {e} occured!")
+        async with httpx.AsyncClient() as client:
+            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
+                                       '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and%20failed')
         response.status_code = status.HTTP_502_BAD_GATEWAY
         raise WebSocketException(code=502, reason=str(e))
     except Exception as e:
         logger.error(f"Encountered unknown exception {e}")
+        async with httpx.AsyncClient() as client:
+            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
+                                       '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and%20failed')
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         raise Exception
