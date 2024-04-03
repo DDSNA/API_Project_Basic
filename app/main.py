@@ -4,17 +4,22 @@ from datetime import datetime, timedelta, timezone
 from io import StringIO
 import logging
 import psycopg2
+from typing import Annotated
 
 # Third-party imports
 import pandas as pd
 import sqlalchemy
 import httpx
 from dotenv import load_dotenv
-from fastapi import FastAPI, HTTPException, WebSocketException, status, Response
+from fastapi import FastAPI, HTTPException, WebSocketException, status, Response, Depends
 from fastapi.openapi.utils import get_openapi
+from fastapi.security import OAuth2PasswordBearer
 
 app = FastAPI()
 
+# security
+oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
+# logging
 logger = logging.getLogger(__name__)
 logger.setLevel(logging.INFO)
 handler = logging.FileHandler("log.log")
@@ -23,6 +28,10 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 logger.info("Logging started")
+stream_handler = logging.StreamHandler()
+stream_handler.setFormatter(formatter)
+logger.addHandler(stream_handler)
+
 
 
 ### OPEN API SCHEMA CUSTOMIZATION
@@ -82,8 +91,10 @@ async def update_database(request_json: str = '{"type":"update db"}',
                 response_json = response.json()
                 return response_json
             else:
+                logger.error(msg="Error from cloud function")
                 raise HTTPException(status_code=500, detail="Response is not JSON")
     except HTTPException as e:
+        logger.error(msg=f"Error with {e}")
         raise HTTPException(status_code=504,
                             detail="There is an issue with the cloud function call - may not be reachable")
 
@@ -167,6 +178,7 @@ async def save_current_prun_orders_volume(response: Response):
                 result = await client.get(called_api_link)
 
             if result.status_code == 200:
+                logger.info(msg="Succesful API connection")
                 api_name = api_root.replace('/csv/', '')
 
                 # only proceed if the api works!
@@ -198,12 +210,15 @@ async def save_current_prun_orders_volume(response: Response):
                         if_exists="append",
                         index=False
                     )
+                    logger.info(msg="Dataframe uploaded to sql")
                     pandas_type_dataframe.to_sql(
                         name=f"temporary_df_hold_{api_name}",
                         con=engine, schema="prun_data",
                         if_exists="append",
                         index=False
                     )
+                    logger.info(msg=f"Dataframe uploaded to proper table for api {api_name}")
+
                 except Exception as error:
                     logger.error(f"Error while uploading to database for {destination_filename}, {error}")
                     pass
@@ -213,30 +228,56 @@ async def save_current_prun_orders_volume(response: Response):
     try:
         await download_csv()
         async with httpx.AsyncClient() as client:
-            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
+            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update'
+                                       '%20regarding%20database%21'
                                        '&message=The%20database%20is%20currently%20running%20a%20new%20update%20entry')
-            logger.info(result.status_code)
+            logger.info(msg=f"{result.status_code}")
         return status.HTTP_200_OK
 
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
         async with httpx.AsyncClient() as client:
             result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
-                                       '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and%20failed')
+                                       '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and'
+                                       '%20failed')
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         logger.info(result.status_code)
         raise HTTPException(status_code=500, detail=str(e))
     except WebSocketException as e:
         logger.error(f"Error downloading file, {e} occured!")
         async with httpx.AsyncClient() as client:
-            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
+            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update'
+                                       '%20regarding%20database%21'
                                        '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and%20failed')
         response.status_code = status.HTTP_502_BAD_GATEWAY
         raise WebSocketException(code=502, reason=str(e))
     except Exception as e:
         logger.error(f"Encountered unknown exception {e}")
         async with httpx.AsyncClient() as client:
-            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
+            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update'
+                                       '%20regarding%20database%21'
                                        '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and%20failed')
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         raise Exception
+
+# Database querying gets
+@app.get("/prun/company_list")
+async def get_company_list(token: Annotated[str, Depends(oauth2_scheme)]):
+    return {"token": token}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
