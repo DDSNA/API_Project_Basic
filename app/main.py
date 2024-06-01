@@ -16,7 +16,7 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 
 # routes imports, routes is a fast api module that should contain a file named tables.py where a router is defined
-from app.routes import tables
+from .routes import tables
 
 app = FastAPI()
 
