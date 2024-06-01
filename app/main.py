@@ -15,7 +15,12 @@ from fastapi import FastAPI, HTTPException, WebSocketException, status, Response
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 
+# routes imports, routes is a fast api module that should contain a file named tables.py where a router is defined
+from app.routes import tables
+
 app = FastAPI()
+
+app.include_router(tables.router)
 
 # security
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
