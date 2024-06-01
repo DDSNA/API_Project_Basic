@@ -45,7 +45,7 @@ def custom_openapi():
         return app.openapi_schema
     openapi_schema = get_openapi(
         title="DDSNA Data Engineering Portofolio API",
-        version="0.1.8",
+        version="0.1.9",
         summary="""Thank you for visiting my portofolio project.
                 The schema for my little PrUn ML project. PostgreSQL saving and processing included (and planned)!""",
         description="""
