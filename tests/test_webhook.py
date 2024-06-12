@@ -1,10 +1,12 @@
 import httpx
+import pandas as pd
+from app.core.public_functions import basic_pandas
+
+import pytest
+
+def test_pandas():
+    result = basic_pandas("https://developer.mozilla.org/en-US/docs/Learn/HTML/Tables/Basics")[0]
+    assert isinstance(result, pd.DataFrame)
 
 
-def test_webhook():
-    with httpx.Client() as client:
-        response = client.post("http://127.0.0.1:8000/new-update?title=Dick%20raiser%20is%20coming&message=For%20your"
-                               "%20ass")
-    return response
 
-test_webhook()
