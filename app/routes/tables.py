@@ -6,7 +6,7 @@ from sqlalchemy import text
 import os
 import logging
 
-logger = logging.getLogger(__name__)
+
 router = APIRouter()
 mode = os.environ.get("MODE")
 if mode == "dev":
