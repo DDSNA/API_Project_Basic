@@ -65,9 +65,8 @@ async def get_list_tables():
         engine = create_engine(
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
-            stmt = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='prun_data' "
+            stmt = "SELECT TABLE_NAME FROM INFORMATION_SCHEMA.TABLES WHERE TABLE_SCHEMA='prun_data'; "
             table = connection.execute(text(stmt))
-            logger.info(table.fetchall())
             with open(f"table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
