@@ -72,6 +72,7 @@ async def get_list_tables():
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
             table = open(f"table_list.csv", "r")
+            # reconsider if streaming response is really necessary
             return StreamingResponse(table, media_type="text/csv")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Table list not found")
