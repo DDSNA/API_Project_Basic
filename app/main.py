@@ -264,7 +264,7 @@ async def save_current_prun_orders_volume(response: Response):
 
 
 # Database querying gets
-@app.get("/prun/company_list", tags=['azure'])
+@app.get("/prun/company_list", tags=['azure', 'not functional'])
 async def get_company_list(token: Annotated[str, Depends(oauth2_scheme)]):
     return {"token": token}
 
