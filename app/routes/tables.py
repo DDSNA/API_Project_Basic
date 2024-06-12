@@ -4,7 +4,7 @@ from fastapi.routing import APIRouter
 from sqlalchemy.engine import create_engine
 from sqlalchemy import text
 import os
-
+import logging
 router = APIRouter()
 mode = os.environ.get("MODE")
 if mode == "dev":
@@ -20,6 +20,12 @@ else:
 @router.get("/tables/{table_name}")
 async def get_table(table_name: str):
     try:
+        logging.info(f"{sql_alchemy_postgres_db}, "
+                     f"{sql_alchemy_postgres_host}, "
+                     f"{sql_alchemy_postgres_port}, "
+                     f"{sql_alchemy_postgres_schema},"
+                     f"{sql_alchemy_postgres_db},"
+                     f"{sql_alchemy_postgres_user}")
         engine = create_engine(f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
             table = connection.execute(text(f"SELECT * FROM {sql_alchemy_postgres_schema}.{table_name}"))
