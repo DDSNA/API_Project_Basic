@@ -5,6 +5,8 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy import text
 import os
 import logging
+
+logger = logging.getLogger(__name__)
 router = APIRouter()
 mode = os.environ.get("MODE")
 if mode == "dev":
@@ -19,6 +21,13 @@ else:
 
 @router.get("/tables/{table_name}")
 async def get_table(table_name: str):
+    """
+    Function in charge of getting tables. Tables with spaces need to have quotes inserted.
+
+    Example: "Average Prices (All)" or _
+    :param table_name:
+    :return:
+    """
     try:
         logging.info(f"{sql_alchemy_postgres_db}, "
                      f"{sql_alchemy_postgres_host}, "
