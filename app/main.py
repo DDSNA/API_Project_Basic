@@ -3,6 +3,8 @@ import os
 from datetime import datetime, timedelta, timezone
 from io import StringIO
 import logging
+
+import azure.identity
 import psycopg2
 from typing import Annotated
 
@@ -12,6 +14,7 @@ import sqlalchemy
 import httpx
 from dotenv import load_dotenv
 from fastapi import FastAPI, HTTPException, WebSocketException, status, Response, Depends
+from fastapi.responses import RedirectResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 
@@ -36,7 +39,6 @@ logger.info("Logging started")
 stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
-
 
 
 ### OPEN API SCHEMA CUSTOMIZATION
@@ -67,16 +69,10 @@ app.openapi = custom_openapi
 
 @app.get("/")
 async def root():
-    logger.info(f" request / endpoint!")
-    return {"message": "Hello World"}
+    return RedirectResponse('https://apiprojectbasic-production.up.railway.app/docs')
 
 
-@app.get("/hello/{name}")
-async def say_hello(name: str):
-    return {"message": f"Hello {name}"}
-
-
-@app.get("/prun/update/database")
+@app.get("/prun/update/database", tags=['not functional', 'gcp'])
 async def update_database(request_json: str = '{"type":"update db"}',
                           cloud_function_url: str = "https://us-central1-prun-409500.cloudfunctions.net/prun_orders"
                           ):
@@ -104,7 +100,7 @@ async def update_database(request_json: str = '{"type":"update db"}',
                             detail="There is an issue with the cloud function call - may not be reachable")
 
 
-@app.get("/ping/otherwebsite")
+@app.get("/ping/otherwebsite", status_code=status.HTTP_200_OK, tags=['prun','debug', 'functional'])
 async def ping(website: str = "eve.danserban.ro"):
     try:
         r = httpx.get('https://' + website)
@@ -113,7 +109,7 @@ async def ping(website: str = "eve.danserban.ro"):
         return {"error": str(e)}
 
 
-@app.post("/new-update")
+@app.post("/new-update", tags=['functional', 'prun'])
 async def new_update(title: str = "Update regarding database!",
                      message: str = "The database is currently running a new "
                                     "update entry"):
@@ -139,7 +135,7 @@ async def new_update(title: str = "Update regarding database!",
     return response.status_code
 
 
-@app.get("/prun_update_all", status_code=status.HTTP_202_ACCEPTED)
+@app.get("/prun_update_all", status_code=status.HTTP_202_ACCEPTED, tags=['functional', 'prun'])
 async def save_current_prun_orders_volume(response: Response):
     """
     This function helps in saving ALL current prun orders in a PostgreSQL database. Check with administrator for an
@@ -192,7 +188,7 @@ async def save_current_prun_orders_volume(response: Response):
                 destination_filename = f"{current_time}-{api_name}.csv"
                 dataframe = pd.read_csv(data)
                 pandas_type_dataframe = dataframe
-                #optional but in use now for my own purposes
+                # optional but in use now for my own purposes
                 timezone_gmt_plus_two = timezone(timedelta(hours=+2))
                 pandas_type_dataframe["collection_timestamp"] = datetime.now(tz=timezone_gmt_plus_two)
                 print(dataframe.head())
@@ -242,9 +238,10 @@ async def save_current_prun_orders_volume(response: Response):
     except HTTPException as e:
         logger.error(f"Error downloading file, {e} occured!")
         async with httpx.AsyncClient() as client:
-            result = await client.post('https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
-                                       '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and'
-                                       '%20failed')
+            result = await client.post(
+                'https://apiprojectbasic-production.up.railway.app/new-update?title=Update%20regarding%20database%21'
+                '&message=The%20database%20tried%20running%20a%20new%20update%20entry%20and'
+                '%20failed')
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         logger.info(result.status_code)
         raise HTTPException(status_code=500, detail=str(e))
@@ -265,20 +262,42 @@ async def save_current_prun_orders_volume(response: Response):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         raise Exception
 
+
 # Database querying gets
-@app.get("/prun/company_list")
+@app.get("/prun/company_list", tags=['azure'])
 async def get_company_list(token: Annotated[str, Depends(oauth2_scheme)]):
     return {"token": token}
 
+    file_extension = file.content_type
+    credential = DefaultAzureCredential()
+    storage_url = os.getenv("AZURE_STORAGE_BLOB_URL")
+    blob_client = BlobClient(
+        storage_url,
+        container_name="blob-container-01",
+        blob_name=f"sample-blob-{str(uuid.uuid4())[0:5]}.{file_extension}",
+        credential=credential,
+    )
 
+    try:
+        contents = await file.read()
+        with open(f"app/temp/{file.filename}", "wb") as file_binary:
+            file_binary.write(contents)
+    except Exception as e:
+        logger.error(f"Error while uploading file to azure storage: {e} (saving file locally)")
+        return {"error": str(e)}
 
+    try:
+        file_loc = f"app/temp/{file.filename}"
+        with open(file_loc, "r") as data:
+            logger.info(f"Taking file from: {file_loc}")
+            blob_client.upload_blob(data)
 
-
-
-
-
-
-
+            print(f"Uploaded {file.filename} to {blob_client.url}")
+            return {"filename": file.filename}
+    except Exception as e:
+        logger.error(f"Error while uploading file to azure storage: {e} (uploading)")
+        data.close()
+        return {"error": str(e)}
 
 
 
