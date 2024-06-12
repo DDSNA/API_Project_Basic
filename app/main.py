@@ -66,7 +66,7 @@ def custom_openapi():
 app.openapi = custom_openapi
 
 
-@app.get("/")
+@app.get("/", include_in_schema=False)
 async def root():
     return RedirectResponse('https://apiprojectbasic-production.up.railway.app/docs')
 
