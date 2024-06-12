@@ -50,7 +50,7 @@ async def get_table(table_name: str):
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
 
-@router.get("/tables/list")
+@router.get("/tables/list", tags=["functional", "prun"])
 async def get_list_tables():
     try:
         logging.info(f"{sql_alchemy_postgres_db}, "
