@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, timezone
 from io import StringIO
 import logging
 
-import azure.identity
 import psycopg2
 from typing import Annotated
 
@@ -264,40 +263,40 @@ async def save_current_prun_orders_volume(response: Response):
 
 
 # Database querying gets
-@app.get("/prun/company_list", tags=['azure', 'not functional'])
-async def get_company_list(token: Annotated[str, Depends(oauth2_scheme)]):
-    return {"token": token}
-
-    file_extension = file.content_type
-    credential = DefaultAzureCredential()
-    storage_url = os.getenv("AZURE_STORAGE_BLOB_URL")
-    blob_client = BlobClient(
-        storage_url,
-        container_name="blob-container-01",
-        blob_name=f"sample-blob-{str(uuid.uuid4())[0:5]}.{file_extension}",
-        credential=credential,
-    )
-
-    try:
-        contents = await file.read()
-        with open(f"app/temp/{file.filename}", "wb") as file_binary:
-            file_binary.write(contents)
-    except Exception as e:
-        logger.error(f"Error while uploading file to azure storage: {e} (saving file locally)")
-        return {"error": str(e)}
-
-    try:
-        file_loc = f"app/temp/{file.filename}"
-        with open(file_loc, "r") as data:
-            logger.info(f"Taking file from: {file_loc}")
-            blob_client.upload_blob(data)
-
-            print(f"Uploaded {file.filename} to {blob_client.url}")
-            return {"filename": file.filename}
-    except Exception as e:
-        logger.error(f"Error while uploading file to azure storage: {e} (uploading)")
-        data.close()
-        return {"error": str(e)}
+# @app.get("/prun/company_list", tags=['azure', 'not functional'])
+# async def get_company_list(token: Annotated[str, Depends(oauth2_scheme)]):
+#     return {"token": token}
+#
+#     file_extension = file.content_type
+#     credential = DefaultAzureCredential()
+#     storage_url = os.getenv("AZURE_STORAGE_BLOB_URL")
+#     blob_client = BlobClient(
+#         storage_url,
+#         container_name="blob-container-01",
+#         blob_name=f"sample-blob-{str(uuid.uuid4())[0:5]}.{file_extension}",
+#         credential=credential,
+#     )
+#
+#     try:
+#         contents = await file.read()
+#         with open(f"app/temp/{file.filename}", "wb") as file_binary:
+#             file_binary.write(contents)
+#     except Exception as e:
+#         logger.error(f"Error while uploading file to azure storage: {e} (saving file locally)")
+#         return {"error": str(e)}
+#
+#     try:
+#         file_loc = f"app/temp/{file.filename}"
+#         with open(file_loc, "r") as data:
+#             logger.info(f"Taking file from: {file_loc}")
+#             blob_client.upload_blob(data)
+#
+#             print(f"Uploaded {file.filename} to {blob_client.url}")
+#             return {"filename": file.filename}
+#     except Exception as e:
+#         logger.error(f"Error while uploading file to azure storage: {e} (uploading)")
+#         data.close()
+#         return {"error": str(e)}
 
 
 
