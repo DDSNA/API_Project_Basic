@@ -6,7 +6,7 @@ from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, NoSuchTableError
 import os
 
-from ..main import logger
+from ..app.main import logger
 
 router = APIRouter()
 mode = os.environ.get("MODE")
