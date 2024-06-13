@@ -64,7 +64,7 @@ async def get_table(table_name: str):
         raise HTTPException(status_code=500, detail=str(e))
 
 
-@router.get("/table-list", tags=["functional", "prun"])
+@router.get("/table-list/{refresh}", tags=["functional", "prun"])
 async def get_list_tables():
     try:
         logger.info(f"{sql_alchemy_postgres_db},"
