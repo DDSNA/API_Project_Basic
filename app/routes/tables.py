@@ -52,7 +52,7 @@ async def get_table(table_name: str):
         engine = create_engine(
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
-            table = connection.execute(text(f"SELECT * FROM {sql_alchemy_postgres_schema}.{table_name}"))
+            table = connection.execute(text(f'SELECT * FROM {sql_alchemy_postgres_schema}."{table_name}"'))
             with open(f"{table_name}.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
