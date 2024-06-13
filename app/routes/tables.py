@@ -78,7 +78,7 @@ async def get_list_tables():
         with engine.connect() as connection:
             metadata = MetaData()
             materialized_view = Table('"Cloud_Acc_Available_Tables"', metadata, autoload_with=engine)
-            table = connection.execute(materialized_view.select())
+            table = connection.execute(text('SELECT * FROM \"Cloud_Acc_Available_Tables\"'))
             with open("table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
