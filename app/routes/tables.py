@@ -38,7 +38,7 @@ async def get_table(table_name: str):
     """
     Function in charge of getting tables. Tables with spaces need to have quotes inserted.
 
-    ==Example==: "Average Prices (All)" or _fact_companies_summary_dated
+    ==Example== : "Average Prices (All)" or _fact_companies_summary_dated
 
 
     :param table_name:
