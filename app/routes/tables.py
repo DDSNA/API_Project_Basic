@@ -69,9 +69,9 @@ async def get_table(table_name: str):
 @router.get("/tables/list", tags=["functional", "prun"])
 async def get_list_tables():
     try:
-        logger.info(f"{sql_alchemy_postgres_db}, "
-                     f"{sql_alchemy_postgres_host}, "
-                     f"{sql_alchemy_postgres_port}, "
+        logger.info(f"{sql_alchemy_postgres_db},"
+                     f"{sql_alchemy_postgres_host},"
+                     f"{sql_alchemy_postgres_port},"
                      f"{sql_alchemy_postgres_schema},"
                      f"{sql_alchemy_postgres_db},"
                      f"{sql_alchemy_postgres_user}")
