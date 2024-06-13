@@ -78,11 +78,11 @@ async def get_list_tables():
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
             stmt = 'SELECT * FROM prun_data."Cloud_Acc_Available_Tables"'
-            table = connection.execute(statement=text(stmt))
-            with open(f"table_list.csv", "w") as file:
+            table = connection.execute(text(stmt))
+            with open("table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
-            table = open(f"table_list.csv", "r")
+            table = open("table_list.csv", "r")
             # reconsider if streaming response is really necessary
             return StreamingResponse(table, media_type="text/csv")
     except FileNotFoundError:
