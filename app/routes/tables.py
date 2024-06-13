@@ -36,7 +36,9 @@ else:
 @router.get("/tables/{table_name}", tags=['functional', 'prun'])
 async def get_table(table_name: str):
     """
-    Function in charge of getting tables. Tables with spaces need to have quotes inserted.
+    Function in charge of getting tables. Use the table name to get the table.
+    ---
+    Consider using the function below for a complete list of tables.
 
     `Example` : "Average Prices (All)" or _fact_companies_summary_dated
 
