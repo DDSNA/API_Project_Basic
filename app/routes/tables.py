@@ -79,10 +79,9 @@ async def get_list_tables():
             # call procedure to refresh table due to limited rights of user
             stmt = text("CALL prun_data.refresh_acc_cloud_accesible_tables();")
             result = connection.execute(stmt)
-            metadata = MetaData()
-            materialized_view = Table('"Cloud_Acc_Available_Tables"', metadata, autoload_with=engine)
 
-            table = connection.execute(text('SELECT * FROM prun_data."Cloud_Acc_Available_Tables"'))
+            # actual returned csv request
+            table = connection.execute(text('SELECT * FROM prun_data.acc_cloud_accesible_tables'))
             with open("table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
