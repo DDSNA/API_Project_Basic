@@ -3,6 +3,7 @@ from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRouter
 from sqlalchemy.engine import create_engine
 from sqlalchemy import text
+from sqlalchemy.exc import IntegrityError, NoSuchTableError
 import os
 import logging
 
@@ -75,5 +76,7 @@ async def get_list_tables():
             return StreamingResponse(table, media_type="text/csv")
     except FileNotFoundError:
         raise HTTPException(status_code=404, detail="Table list not found")
+    except NoSuchTableError:
+        raise HTTPException(status_code=404, detail="Table not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
