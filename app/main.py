@@ -99,7 +99,7 @@ async def update_database(request_json: str = '{"type":"update db"}',
                             detail="There is an issue with the cloud function call - may not be reachable")
 
 
-@app.get("/ping/otherwebsite", status_code=status.HTTP_200_OK, tags=['prun','debug', 'functional'])
+@app.get("/ping/otherwebsite", status_code=status.HTTP_200_OK, tags=['prun','debug'], deprecated=True)
 async def ping(website: str = "eve.danserban.ro"):
     try:
         r = httpx.get('https://' + website)
@@ -134,7 +134,7 @@ async def new_update(title: str = "Update regarding database!",
     return response.status_code
 
 
-@app.get("/prun_update_all", status_code=status.HTTP_202_ACCEPTED, tags=['functional', 'prun'])
+@app.get("/prun_update_all", status_code=status.HTTP_202_ACCEPTED, tags=['functional', 'prun'], deprecated=True)
 async def save_current_prun_orders_volume(response: Response):
     """
     This function helps in saving ALL current prun orders in a PostgreSQL database. Check with administrator for an
