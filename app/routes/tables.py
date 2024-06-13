@@ -5,8 +5,8 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy import text
 from sqlalchemy.exc import IntegrityError, NoSuchTableError
 import os
-import logging
 
+from ..main import logger
 
 router = APIRouter()
 mode = os.environ.get("MODE")
@@ -33,7 +33,7 @@ async def get_table(table_name: str):
     :return:
     """
     try:
-        logging.info(f"{sql_alchemy_postgres_db}, "
+        logger.info(f"{sql_alchemy_postgres_db}, "
                      f"{sql_alchemy_postgres_host}, "
                      f"{sql_alchemy_postgres_port}, "
                      f"{sql_alchemy_postgres_schema},"
@@ -57,7 +57,7 @@ async def get_table(table_name: str):
 @router.get("/tables/list", tags=["functional", "prun"])
 async def get_list_tables():
     try:
-        logging.info(f"{sql_alchemy_postgres_db}, "
+        logger.info(f"{sql_alchemy_postgres_db}, "
                      f"{sql_alchemy_postgres_host}, "
                      f"{sql_alchemy_postgres_port}, "
                      f"{sql_alchemy_postgres_schema},"
@@ -67,7 +67,7 @@ async def get_list_tables():
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
             stmt = 'SELECT * FROM prun_data."Cloud_Acc_Available_Tables"'
-            table = connection.execute(text(stmt))
+            table = connection.execute(statement=text(stmt))
             with open(f"table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
