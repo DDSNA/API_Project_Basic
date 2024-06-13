@@ -46,18 +46,18 @@ def custom_openapi():
         return app.openapi_schema
     openapi_schema = get_openapi(
         title="DDSNA Data Engineering Portofolio API",
-        version="0.1.9",
-        summary="""Thank you for visiting my portofolio project.
-                The schema for my little PrUn ML project. PostgreSQL saving and processing included (and planned)!""",
+        version="0.2.1",
+        summary="Thank you for visiting my portofolio project.",
         description="""
         As mentioned the schema is for personal use. If you wish to access the database feel free to reach out
         to the development team (email here!). The code is not opensource at the moment.
         Currently the data is saved as a string from a dataframe for all csv endpoints of https://doc.fnar.net.
-        Only through their graceful contribution were my skills honed and possible at all, so I thank them and you should too!""",
+        Only through their graceful contribution were my skills honed and possible at all, so I thank them and you should check out their work if you can!""",
         routes=app.routes,
+        contact={'name': 'Maintainer', 'email':'hello@danserban.ro', 'url':'https://danserban.ro'}
     )
     openapi_schema["info"]["x-logo"] = {
-        "url": "https://fastapi.tiangolo.com/img/logo-margin/logo-teal.png"
+        "url": "https://upload.wikimedia.org/wikiversity/en/8/8c/FastAPI_logo.png"
     }
     app.openapi_schema = openapi_schema
     return app.openapi_schema
