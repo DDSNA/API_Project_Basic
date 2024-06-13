@@ -1,8 +1,9 @@
+import sqlalchemy
 from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRouter
 from sqlalchemy.engine import create_engine
-from sqlalchemy import text
+from sqlalchemy import text, MetaData, Select, Table
 from sqlalchemy.exc import IntegrityError, NoSuchTableError
 import os
 
@@ -77,8 +78,9 @@ async def get_list_tables():
         engine = create_engine(
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
-            stmt = 'SELECT * FROM prun_data."Cloud_Acc_Available_Tables"'
-            table = connection.execute(text(stmt))
+            metadata = MetaData()
+            materialized_view = Table('Cloud_Acc_Available_Tables', metadata, autoload_with=engine)
+            table = connection.execute(materialized_view.select())
             with open("table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
