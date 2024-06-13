@@ -79,7 +79,7 @@ async def get_list_tables():
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
             metadata = MetaData()
-            materialized_view = Table('Cloud_Acc_Available_Tables', metadata, autoload_with=engine)
+            materialized_view = Table('"Cloud_Acc_Available_Tables"', metadata, autoload_with=engine)
             table = connection.execute(materialized_view.select())
             with open("table_list.csv", "w") as file:
                 for row in table:
