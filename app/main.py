@@ -68,7 +68,7 @@ app.openapi = custom_openapi
 
 @app.get("/", include_in_schema=False)
 async def root():
-    return RedirectResponse('https://apiprojectbasic-production.up.railway.app/docs')
+    return RedirectResponse('https://prun-api.up.railway.app/docs')
 
 
 @app.get("/prun/update/database", tags=['not functional', 'gcp'])
