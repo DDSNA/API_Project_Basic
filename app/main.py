@@ -49,6 +49,7 @@ def custom_openapi():
         version="0.2.1",
         summary="Thank you for visiting my portofolio project.",
         description="""
+        Prosperous Universe is an industrial space trading and manufacturing game where you work with other players to create an economy from the groud up at a galactic level.
         As mentioned the schema is for personal use. If you wish to access the database feel free to reach out
         to the development team (email here!). The code is not opensource at the moment.
         Currently the data is saved as a string from a dataframe for all csv endpoints of https://doc.fnar.net.
