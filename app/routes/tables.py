@@ -55,6 +55,8 @@ async def get_table(table_name: str):
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
             try:
+                logger.info(f"Table name: {table_name}, with length of {len(table_name)}")
+                print(len(table_name))
                 len(table_name) < 38
             except Exception as e:
                 logger.error(f"Error connecting to database, too large table name: {e}")
