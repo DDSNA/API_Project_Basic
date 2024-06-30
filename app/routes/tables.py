@@ -3,7 +3,7 @@ from fastapi import HTTPException
 from fastapi.responses import StreamingResponse
 from fastapi.routing import APIRouter
 from sqlalchemy.engine import create_engine
-from sqlalchemy import text, MetaData, Select, Table
+from sqlalchemy import text, MetaData, Select, Table, select, Column, Integer, String, ForeignKey, Sequence
 from sqlalchemy.exc import IntegrityError, NoSuchTableError
 import os
 
@@ -60,7 +60,8 @@ async def get_table(table_name: str):
                 raise HTTPException(status_code=400, detail="Table name too long")
             else:
                 pass
-            table = connection.execute(text(f'SELECT * FROM {sql_alchemy_postgres_schema}."{table_name}"'))
+            full_table_name = f"{sql_alchemy_postgres_schema}.{table_name}"
+            table = connection.execute(statement=select(full_table_name))
 
             with open(f"{table_name}.csv", "w") as file:
                 # WRITE THE HEADER TO THE FILE TOO
@@ -93,7 +94,7 @@ async def get_list_tables():
             result = connection.execute(stmt)
 
             # actual returned csv request
-            table = connection.execute(text('SELECT * FROM prun_data.acc_cloud_accesible_tables'))
+            table = connection.execute(statement=select("prun_data.acc_cloud_accesible_tables"))
             with open("table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
