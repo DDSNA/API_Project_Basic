@@ -54,13 +54,12 @@ async def get_table(table_name: str):
         engine = create_engine(
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
-            try:
+            if len(table_name) > 38:
                 logger.info(f"Table name: {table_name}, with length of {len(table_name)}")
                 print(len(table_name))
-                len(table_name) < 38
-            except Exception as e:
-                logger.error(f"Error connecting to database, too large table name: {e}")
-                raise HTTPException(status_code=500, detail="Error connecting to database")
+                raise HTTPException(status_code=400, detail="Table name too long")
+            else:
+                pass
             table = connection.execute(text(f'SELECT * FROM {sql_alchemy_postgres_schema}."{table_name}"'))
 
             with open(f"{table_name}.csv", "w") as file:
