@@ -60,7 +60,7 @@ async def get_table(table_name: str):
                 raise HTTPException(status_code=400, detail="Table name too long")
             else:
                 pass
-            full_table_name = f"{sql_alchemy_postgres_schema}.{table_name}"
+            full_table_name = f"{table_name}"
             table = connection.execute(statement=select(full_table_name))
 
             with open(f"{table_name}.csv", "w") as file:
