@@ -89,12 +89,14 @@ async def get_list_tables():
         engine = create_engine(
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
+            metadata = MetaData()
             # call procedure to refresh table due to limited rights of user
             stmt = text("CALL prun_data.refresh_acc_cloud_accesible_tables();")
             result = connection.execute(stmt)
 
             # actual returned csv request
-            table = connection.execute(statement=select('prun_data.acc_cloud_accesible_tables'))
+            table_selector = Table('acc_cloud_accesible_tables', metadata, autoload_with=engine, schema='prun_data')
+            table = connection.execute(statement=select(table_selector))
             with open("table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
