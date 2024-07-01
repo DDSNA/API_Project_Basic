@@ -94,7 +94,7 @@ async def get_list_tables():
             result = connection.execute(stmt)
 
             # actual returned csv request
-            table = connection.execute(statement=select("prun_data.acc_cloud_accesible_tables"))
+            table = connection.execute(statement=select('prun_data.acc_cloud_accesible_tables'))
             with open("table_list.csv", "w") as file:
                 for row in table:
                     file.write(",".join([str(cell) for cell in row]) + "\n")
