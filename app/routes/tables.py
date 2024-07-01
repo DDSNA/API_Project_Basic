@@ -60,8 +60,8 @@ async def get_table(table_name: str):
                 raise HTTPException(status_code=400, detail="Table name too long")
             else:
                 pass
-            full_table_name = f"{table_name}"
-            table = connection.execute(statement=select(full_table_name))
+            requested_table_loader = Table(table_name, MetaData(), autoload_with=engine, schema='prun_data')
+            table = connection.execute(statement=select(requested_table_loader))
 
             with open(f"{table_name}.csv", "w") as file:
                 # WRITE THE HEADER TO THE FILE TOO
