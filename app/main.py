@@ -4,7 +4,6 @@ from datetime import datetime, timedelta, timezone
 from io import StringIO
 import logging
 
-import jwt
 import psycopg2
 from typing import Annotated
 
@@ -207,6 +206,7 @@ async def save_current_prun_orders_volume(response: Response):
                 print(dataframe)
                 print(dataframe.shape)
                 try:
+
                     logger.info(msg="Dataframe uploaded to sql")
                     pandas_type_dataframe.to_sql(
                         name=f"temporary_df_hold_{api_name}",
