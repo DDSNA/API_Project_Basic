@@ -4,6 +4,7 @@ from datetime import datetime, timedelta, timezone
 from io import StringIO
 import logging
 
+import jwt
 import psycopg2
 from typing import Annotated
 
@@ -18,11 +19,12 @@ from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
 
 # routes imports, routes is a fast api module that should contain a file named tables.py where a router is defined
-from .routes import tables
+from .routes import tables, users
 
 app = FastAPI()
 
 app.include_router(tables.router)
+app.include_router(users.router)
 
 # security
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="token")
@@ -205,12 +207,6 @@ async def save_current_prun_orders_volume(response: Response):
                 print(dataframe)
                 print(dataframe.shape)
                 try:
-                    dataframe.to_sql(
-                        name="temporary_csv_hold",
-                        con=engine, schema="prun",
-                        if_exists="append",
-                        index=False
-                    )
                     logger.info(msg="Dataframe uploaded to sql")
                     pandas_type_dataframe.to_sql(
                         name=f"temporary_df_hold_{api_name}",
@@ -298,6 +294,7 @@ async def save_current_prun_orders_volume(response: Response):
 #         logger.error(f"Error while uploading file to azure storage: {e} (uploading)")
 #         data.close()
 #         return {"error": str(e)}
+
 
 
 
