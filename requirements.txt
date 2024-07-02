@@ -7,4 +7,4 @@ pandas>=2.2.0
 SQLAlchemy>=2.0.25
 python-dotenv>=1.0.0
 psycopg2>=2.9.9
-jwt>=2.2.0
+jwt
