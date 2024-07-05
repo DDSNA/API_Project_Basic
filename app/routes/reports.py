@@ -62,12 +62,13 @@ async def get_visual_report(item_ticker: str,
 
             preffered_file_types = ['csv', 'parquet']
             for file_type in preffered_file_types:
-                if os.path.exists(f"./{file_type}"):
+                if os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}'))):
                     logging.info(f"Directory {file_type} exists, returning {os.path.exists(f'./{file_type}')}")
                     pass
                 else:
                     logging.warning(f"Creating directory {file_type}")
                     os.mkdir(f"{file_type}")
+                    os.mkdir(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}')))
             logging.info(f"Reading tables: {tables_list}")
             for table_name in tables_list:
                 try:
@@ -149,7 +150,9 @@ def create_plots(array: list, array_tickers: list):
                 pass
             else:
                 logging.warning(f"Creating processed directory at {datetime.datetime.now()}")
+                # use os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}'))
                 os.mkdir(f"./processed")
+                os.mkdir(os.path.abspath(os.path.join(os.path.dirname(__file__), f'processed')))
             for material_ticker_filter in array_tickers:
                 logging.info(f"Processing {df_name} at {datetime.datetime.now()} for ticker {material_ticker_filter}")
                 df: pd.DataFrame = load_data(f"{df_name}")
