@@ -23,8 +23,6 @@ formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(messag
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
-internal_address_db = os.getenv("INTERNAL_ADDRESS_DB")
-
 router = APIRouter()
 
 
@@ -53,7 +51,7 @@ async def get_visual_report(item_ticker: str,
 
     try:
         engine = create_engine(
-            f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{internal_address_db}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
+            f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
             query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'prun_data'"
             tables = pd.read_sql(query, engine)
