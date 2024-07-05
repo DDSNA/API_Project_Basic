@@ -53,6 +53,21 @@ async def get_visual_report(item_ticker: str,
         raise HTTPException(status_code=500, detail="Error getting environment variables")
     item_ticker = item_ticker.upper()
     try:
+        data_focus = data_focus.lower()
+        logger.info(f"Data focus: {data_focus}")
+        if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
+            logging.info(f"Path status of path is {os.path.exists(f'./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png')}")
+            return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
+                                     media_type="image/png")
+        else:
+            create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
+            pass
+    except Exception as e:
+        logger.error(f"Error reading image: {e}")
+        logger.warning(f"Current working directory: {os.getcwd()}")
+        cleanup_processed_files()
+        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
+    try:
         engine = create_engine(
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
@@ -85,19 +100,7 @@ async def get_visual_report(item_ticker: str,
         logger.error(f"Error reading tables: {e}")
         raise HTTPException(status_code=500, detail="Error reading tables")
 
-    try:
-        data_focus = data_focus.lower()
-        if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
-            return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
-                                     media_type="image/png")
-        else:
-            create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
-            pass
-    except Exception as e:
-        logger.error(f"Error reading image: {e}")
-        logger.warning(f"Current working directory: {os.getcwd()}")
-        cleanup_processed_files()
-        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
+
     try:
         if refresh:
             logger.warning(f"Current working directory: {os.getcwd()}")
