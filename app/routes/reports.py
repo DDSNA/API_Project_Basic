@@ -29,7 +29,7 @@ router = APIRouter()
 @router.get("/reports/{item_ticker}", tags=['functional', 'prun'])
 async def get_visual_report(item_ticker: str,
                             refresh: bool,
-                            data_focus: str):
+                            data_focus: str = "bids"):
     """
     Function in charge of getting tables. Use the ticker name to get the the appropriate image
     :param item_ticker:
@@ -84,6 +84,7 @@ async def get_visual_report(item_ticker: str,
         raise HTTPException(status_code=500, detail="Error reading tables")
 
     try:
+        data_focus = data_focus.lower()
         if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
             return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
                                      media_type="image/png")
