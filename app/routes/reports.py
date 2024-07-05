@@ -31,12 +31,12 @@ router = APIRouter()
 @router.get("/reports/{item_ticker}", tags=['functional', 'prun'])
 async def get_visual_report(item_ticker: str,
                             refresh: bool,
-                            type: str):
+                            data_focus: str):
     """
     Function in charge of getting tables. Use the ticker name to get the the appropriate image
     :param item_ticker:
     :param refresh:
-    :param type:
+    :param data_focus:
     :return:
     """
     try:
@@ -86,11 +86,10 @@ async def get_visual_report(item_ticker: str,
         raise HTTPException(status_code=500, detail="Error reading tables")
 
     try:
-        if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{type}_csv.png"):
-            return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{type}_csv.png", media_type="image/png")
+        if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
+            return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png", media_type="image/png")
         else:
-            create_plots([f"temporary_df_hold_{type}.csv"], [item_ticker])
-            #TODO: insert processing code here
+            create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
             pass
     except Exception as e:
         logger.error(f"Error reading image: {e}")
@@ -99,8 +98,8 @@ async def get_visual_report(item_ticker: str,
     try:
         if refresh == True:
             cleanup_processed_files()
-            create_plots([f"temporary_df_hold_{type}.csv"], [item_ticker])
-        return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{type}_csv.png", media_type="image/png")
+            create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
+        return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png", media_type="image/png")
     except Exception as e:
         logger.error(f"Error reading image: {e}")
         cleanup_processed_files()
