@@ -117,6 +117,7 @@ def load_data(filename) -> pd.DataFrame:
     """
     logging.info(f"Loading data from {filename} at {datetime.datetime.now()}")
     file_type = filename.split('.')[-1]
+    logging.info(f"During loading, file type is {file_type}, the current directory is {os.getcwd()}")
     data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}/{filename}'))
     logging.info(f"Data path: {data_path}")
     logging.warning(f"Checking if path exists {os.path.exists(data_path)}, at {os.getcwd()}")
