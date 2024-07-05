@@ -81,7 +81,8 @@ async def get_visual_report(item_ticker: str,
 
     try:
         if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
-            return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png", media_type="image/png")
+            return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
+                                     media_type="image/png")
         else:
             create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
             pass
@@ -90,14 +91,17 @@ async def get_visual_report(item_ticker: str,
         cleanup_processed_files()
         raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
     try:
-        if refresh == True:
+        if refresh:
             cleanup_processed_files()
             create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
-        return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png", media_type="image/png")
+        return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
+                                 media_type="image/png")
     except Exception as e:
         logger.error(f"Error reading image: {e}")
         cleanup_processed_files()
         raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
+
+
 def load_data(filename) -> pd.DataFrame:
     """
     Load data from a file, must contain file extension
@@ -107,7 +111,7 @@ def load_data(filename) -> pd.DataFrame:
     """
     logging.info(f"Loading data from {filename} at {datetime.datetime.now()}")
     file_type = filename.split('.')[-1]
-    data_path = os.path.join(os.path.dirname(__file__), f'./{file_type}/{filename}')
+    data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}/{filename}'))
     print(data_path)
     data = pd.read_csv(data_path)
     print(data.head())
@@ -145,21 +149,20 @@ def create_plots(array: list, array_tickers: list):
                 df['Date'] = pd.to_datetime(df['collection_timestamp']).dt.date
 
                 df['Suspected duplicate'] = df.duplicated(
-                    subset=['MaterialTicker', 'ExchangeCode', 'ItemCost', 'ItemCount', 'CompanyName', 'Date'], keep="first")
+                    subset=['MaterialTicker', 'ExchangeCode', 'ItemCost', 'ItemCount', 'CompanyName', 'Date'],
+                    keep="first")
                 df.to_csv(f'processed/{material_ticker_filter}-{df_name}-with-suspected-duplicates.csv')
                 print(df)
                 df.drop(df[df['Suspected duplicate'] == True].index, inplace=True)
                 df.drop(df[df['ItemCost'] < 0].index, inplace=True)
                 df.drop(df[df['ItemCount'] < 0].index, inplace=True)
 
-                grouped :pd.Series= df.groupby(['Date', 'ExchangeCode', 'MaterialTicker'])['ItemCount'].sum()
-                grouped :pd.DataFrame= grouped.to_frame()
+                grouped: pd.Series = df.groupby(['Date', 'ExchangeCode', 'MaterialTicker'])['ItemCount'].sum()
+                grouped: pd.DataFrame = grouped.to_frame()
                 grouped.to_csv(f'processed/{material_ticker_filter}-{df_name}-simplified_grouped.csv')
                 df['Total Available'] = grouped['ItemCount'].sum()
                 logging.info(f"Grouped data for {material_ticker_filter} at {datetime.datetime.now()}")
                 logging.info(f"Plotting for {material_ticker_filter} at {datetime.datetime.now()}")
-
-
 
                 plt.clf()
                 # Create a new figure instance for the next plot
@@ -234,7 +237,8 @@ def create_plots(array: list, array_tickers: list):
                              dashes=False,
                              sizes=(1, 30))
 
-                plt.title(f"Item Availability Daily for {material_ticker_filter}, split by Market Exchange", fontsize=20, color='gray',
+                plt.title(f"Item Availability Daily for {material_ticker_filter}, split by Market Exchange",
+                          fontsize=20, color='gray',
                           fontweight='bold')
                 plt.xticks(rotation=90)
 
@@ -284,6 +288,7 @@ def create_plots(array: list, array_tickers: list):
     except Exception as e:
         logging.error(f"Error in plotting: {e}")
         return False
+
 
 def cleanup_processed_files():
     """
