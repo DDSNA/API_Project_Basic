@@ -28,7 +28,7 @@ internal_address_db = os.getenv("INTERNAL_ADDRESS_DB")
 router = APIRouter()
 
 
-@router.get("/tables/{table_name}", tags=['functional', 'prun'])
+@router.get("/reports/{item_ticker}", tags=['functional', 'prun'])
 async def get_visual_report(item_ticker: str,
                             refresh: bool,
                             type: str):
@@ -96,8 +96,15 @@ async def get_visual_report(item_ticker: str,
         logger.error(f"Error reading image: {e}")
         cleanup_processed_files()
         raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
-
-
+    try:
+        if refresh == True:
+            cleanup_processed_files()
+            create_plots([f"temporary_df_hold_{type}.csv"], [item_ticker])
+        return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{type}_csv.png", media_type="image/png")
+    except Exception as e:
+        logger.error(f"Error reading image: {e}")
+        cleanup_processed_files()
+        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
 def load_data(filename) -> pd.DataFrame:
     """
     Load data from a file, must contain file extension
