@@ -52,50 +52,19 @@ async def get_visual_report(item_ticker: str,
         logger.warning(f"Current working directory: {os.getcwd()}")
         raise HTTPException(status_code=500, detail="Error getting environment variables")
     item_ticker = item_ticker.upper()
+    initialize_tables()
     try:
         data_focus = data_focus.lower()
         logger.info(f"Data focus: {data_focus}")
         if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
-            logging.info(f"Path status of path is {os.path.exists(f'./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png')}")
+            logging.info(
+                f"Path status of path is {os.path.exists(f'./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png')}")
             return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
                                      media_type="image/png")
         else:
             create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
             pass
     except Exception as e:
-        try:
-            engine = create_engine(
-                f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
-            with engine.connect() as connection:
-                query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'prun_data'"
-                tables = pd.read_sql(query, engine)
-                tables_list = tables['table_name'].tolist()
-                tables_list.sort()
-
-                preffered_file_types = ['csv', 'parquet']
-                for file_type in preffered_file_types:
-                    if os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}'))):
-                        logging.info(f"Directory {file_type} exists, returning {os.path.exists(f'./{file_type}')}")
-                        pass
-                    else:
-                        logging.warning(f"Creating directory {file_type}")
-                        os.mkdir(f"{file_type}")
-                        os.mkdir(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}')))
-                logging.info(f"Reading tables: {tables_list}")
-                for table_name in tables_list:
-                    try:
-                        logging.info(f"Reading table: {table_name}")
-                        df = pd.DataFrame(pd.read_sql(f'SELECT * FROM prun_data."{table_name}";', engine))
-                        logging.info(f"Table {table_name} read")
-                        df.to_csv(f"./csv/{table_name}.csv", index=False)
-                        df.to_parquet(f"./parquet/{table_name}.parquet", index=False, engine='pyarrow')
-                    except Exception as e:
-                        logging.error(f"Error reading table: {table_name} with error: {e}")
-                        continue
-        except Exception as e:
-            logger.error(f"Error reading tables: {e}")
-            raise HTTPException(status_code=500, detail="Error reading tables")
-
         logger.error(f"Error reading image: {e}")
         logger.warning(f"Current working directory: {os.getcwd()}")
         cleanup_processed_files()
@@ -148,7 +117,8 @@ def create_plots(array: list, array_tickers: list):
     """
     try:
         for df_name in array:
-            logging.warning(f"Processing {df_name} at {datetime.datetime.now()}, checking if path exists {os.path.exists(f'./processed')}")
+            logging.warning(
+                f"Processing {df_name} at {datetime.datetime.now()}, checking if path exists {os.path.exists(f'./processed')}")
             if os.path.exists(f"./processed"):
                 logging.info(f"Processed directory exists at {datetime.datetime.now()}")
                 pass
@@ -321,3 +291,51 @@ def cleanup_processed_files():
     except Exception as e:
         logging.error(f"Error in cleanup: {e}")
         return False
+
+
+def initialize_tables():
+    try:
+        mode = os.environ.get("MODE")
+        sql_alchemy_postgres_user = os.environ.get("PG_USER")
+        sql_alchemy_postgres_password = os.environ.get("PG_PASSWORD")
+        sql_alchemy_postgres_host = os.environ.get("PG_INTERNAL_DOMAIN")
+        sql_alchemy_postgres_port = os.environ.get("PG_INTERNAL_PORT")
+        sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
+        sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
+        logger.warning(f"Current working directory: {os.getcwd()}")
+    except Exception as e:
+        logger.error(f"Error getting environment variables: {e}")
+        logger.warning(f"Current working directory: {os.getcwd()}")
+        raise HTTPException(status_code=500, detail="Error getting environment variables")
+    try:
+        engine = create_engine(
+            f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
+        with engine.connect() as connection:
+            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'prun_data'"
+            tables = pd.read_sql(query, engine)
+            tables_list = tables['table_name'].tolist()
+            tables_list.sort()
+
+            preffered_file_types = ['csv', 'parquet']
+            for file_type in preffered_file_types:
+                if os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}'))):
+                    logging.info(f"Directory {file_type} exists, returning {os.path.exists(f'./{file_type}')}")
+                    pass
+                else:
+                    logging.warning(f"Creating directory {file_type}")
+                    os.mkdir(f"{file_type}")
+                    os.mkdir(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}')))
+            logging.info(f"Reading tables: {tables_list}")
+            for table_name in tables_list:
+                try:
+                    logging.info(f"Reading table: {table_name}")
+                    df = pd.DataFrame(pd.read_sql(f'SELECT * FROM prun_data."{table_name}";', engine))
+                    logging.info(f"Table {table_name} read")
+                    df.to_csv(f"./csv/{table_name}.csv", index=False)
+                    df.to_parquet(f"./parquet/{table_name}.parquet", index=False, engine='pyarrow')
+                except Exception as e:
+                    logging.error(f"Error reading table: {table_name} with error: {e}")
+                    continue
+    except Exception as e:
+        logger.error(f"Error reading tables: {e}")
+        raise HTTPException(status_code=500, detail="Error reading tables")
