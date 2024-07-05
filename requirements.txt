@@ -10,3 +10,4 @@ psycopg2>=2.9.9
 jwt
 seaborn
 matplotlib
+pyarrow
