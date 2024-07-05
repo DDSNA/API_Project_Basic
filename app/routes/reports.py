@@ -45,8 +45,10 @@ async def get_visual_report(item_ticker: str,
         sql_alchemy_postgres_port = os.environ.get("PG_INTERNAL_PORT")
         sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
         sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
+        logger.warning(f"Current working directory: {os.getcwd()}")
     except Exception as e:
         logger.error(f"Error getting environment variables: {e}")
+        logger.warning(f"Current working directory: {os.getcwd()}")
         raise HTTPException(status_code=500, detail="Error getting environment variables")
 
     try:
@@ -88,10 +90,12 @@ async def get_visual_report(item_ticker: str,
             pass
     except Exception as e:
         logger.error(f"Error reading image: {e}")
+        logger.warning(f"Current working directory: {os.getcwd()}")
         cleanup_processed_files()
         raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
     try:
         if refresh:
+            logger.warning(f"Current working directory: {os.getcwd()}")
             cleanup_processed_files()
             create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
         return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
