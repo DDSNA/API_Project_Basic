@@ -118,7 +118,7 @@ def load_data(filename) -> pd.DataFrame:
     logging.info(f"Loading data from {filename} at {datetime.datetime.now()}")
     file_type = filename.split('.')[-1]
     data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}/{filename}'))
-    print(data_path)
+    logging.info(f"Data path: {data_path}")
     data = pd.read_csv(data_path)
     print(data.head())
     print(data.info())
