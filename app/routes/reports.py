@@ -119,6 +119,7 @@ def load_data(filename) -> pd.DataFrame:
     file_type = filename.split('.')[-1]
     data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}/{filename}'))
     logging.info(f"Data path: {data_path}")
+    logging.warning(f"Checking if path exists {os.path.exists(data_path)}, at {os.getcwd()}")
     data = pd.read_csv(data_path)
     print(data.head())
     print(data.info())
