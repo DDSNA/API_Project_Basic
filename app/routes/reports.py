@@ -50,7 +50,7 @@ async def get_visual_report(item_ticker: str,
         logger.error(f"Error getting environment variables: {e}")
         logger.warning(f"Current working directory: {os.getcwd()}")
         raise HTTPException(status_code=500, detail="Error getting environment variables")
-
+    item_ticker = item_ticker.upper()
     try:
         engine = create_engine(
             f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
@@ -165,7 +165,7 @@ def create_plots(array: list, array_tickers: list):
                 df['Suspected duplicate'] = df.duplicated(
                     subset=['MaterialTicker', 'ExchangeCode', 'ItemCost', 'ItemCount', 'CompanyName', 'Date'],
                     keep="first")
-                df.to_csv(f'processed/{material_ticker_filter}-{df_name}-with-suspected-duplicates.csv')
+                df.to_csv(f'./processed/{material_ticker_filter}-{df_name}-with-suspected-duplicates.csv')
                 print(df)
                 df.drop(df[df['Suspected duplicate'] == True].index, inplace=True)
                 df.drop(df[df['ItemCost'] < 0].index, inplace=True)
@@ -173,7 +173,7 @@ def create_plots(array: list, array_tickers: list):
 
                 grouped: pd.Series = df.groupby(['Date', 'ExchangeCode', 'MaterialTicker'])['ItemCount'].sum()
                 grouped: pd.DataFrame = grouped.to_frame()
-                grouped.to_csv(f'processed/{material_ticker_filter}-{df_name}-simplified_grouped.csv')
+                grouped.to_csv(f'./processed/{material_ticker_filter}-{df_name}-simplified_grouped.csv')
                 df['Total Available'] = grouped['ItemCount'].sum()
                 logging.info(f"Grouped data for {material_ticker_filter} at {datetime.datetime.now()}")
                 logging.info(f"Plotting for {material_ticker_filter} at {datetime.datetime.now()}")
