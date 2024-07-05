@@ -41,16 +41,12 @@ async def get_visual_report(item_ticker: str,
     """
     try:
         mode = os.environ.get("MODE")
-        if mode == "dev":
-            sql_alchemy_postgres_user = os.environ.get("PG_USER")
-            sql_alchemy_postgres_password = os.environ.get("PG_PASSWORD")
-            sql_alchemy_postgres_host = os.environ.get("PG_HOST")
-            sql_alchemy_postgres_port = os.environ.get("PG_PORT")
-            sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
-            sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
-        else:
-            logger.info("Production mode")
-            pass
+        sql_alchemy_postgres_user = os.environ.get("PG_USER")
+        sql_alchemy_postgres_password = os.environ.get("PG_PASSWORD")
+        sql_alchemy_postgres_host = os.environ.get("PG_INTERNAL_DOMAIN")
+        sql_alchemy_postgres_port = os.environ.get("PG_INTERNAL_PORT")
+        sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
+        sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
     except Exception as e:
         logger.error(f"Error getting environment variables: {e}")
         raise HTTPException(status_code=500, detail="Error getting environment variables")
