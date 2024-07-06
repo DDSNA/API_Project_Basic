@@ -52,10 +52,10 @@ async def get_visual_report(item_ticker: str,
         logger.warning(f"Current working directory: {os.getcwd()}")
         raise HTTPException(status_code=500, detail="Error getting environment variables")
     item_ticker = item_ticker.upper()
-    initialize_tables()
     try:
         data_focus = data_focus.lower()
         logger.info(f"Data focus: {data_focus}")
+        os.mkdir(f"./images")
         if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
             logging.info(
                 f"Path status of path is {os.path.exists(f'./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png')}")
@@ -293,7 +293,8 @@ def cleanup_processed_files():
         return False
 
 
-def initialize_tables():
+@router.get("/reports/initialize", tags=['functional', 'prun'])
+async def initialize_tables():
     try:
         mode = os.environ.get("MODE")
         sql_alchemy_postgres_user = os.environ.get("PG_USER")
@@ -336,6 +337,8 @@ def initialize_tables():
                 except Exception as e:
                     logging.error(f"Error reading table: {table_name} with error: {e}")
                     continue
+
+        logging.info("Successfuly initialized data")
     except Exception as e:
         logger.error(f"Error reading tables: {e}")
         raise HTTPException(status_code=500, detail="Error reading tables")
