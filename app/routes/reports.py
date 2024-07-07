@@ -27,7 +27,7 @@ router = APIRouter()
 
 
 # noinspection PyPackageRequirements
-@router.get("/reports/{item_ticker}", tags=['functional', 'prun'])
+@router.get("/reports/{item_ticker}", tags=['functional', 'prun'], status_code=200)
 async def get_visual_report(item_ticker: str,
                             refresh: bool,
                             data_focus: str = "bids"):
@@ -62,7 +62,7 @@ async def get_visual_report(item_ticker: str,
             return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
                                      media_type="image/png")
         else:
-            create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
+            await create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
             pass
     except Exception as e:
         logger.error(f"Error reading image: {e}")
@@ -74,7 +74,7 @@ async def get_visual_report(item_ticker: str,
         if refresh:
             logger.warning(f"Current working directory: {os.getcwd()}")
             cleanup_processed_files()
-            create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
+            await create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
         return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
                                  media_type="image/png")
     except Exception as e:
@@ -103,7 +103,7 @@ def load_data(filename) -> pd.DataFrame:
     return data
 
 
-def create_plots(array: list, array_tickers: list):
+async def create_plots(array: list, array_tickers: list):
     """
     Create plots for the data, based on the processed tables located in ./processed
 
@@ -293,8 +293,12 @@ def cleanup_processed_files():
         return False
 
 
-@router.get("/reports/initialize", tags=['functional', 'prun'])
+@router.get("/reports/initialize", tags=['functional', 'prun'], status_code=200, deprecated=True)
 async def initialize_tables():
+    """
+    Not functional yet - in testing
+    :return:
+    """
     try:
         mode = os.environ.get("MODE")
         sql_alchemy_postgres_user = os.environ.get("PG_USER")
