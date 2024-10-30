@@ -6,6 +6,7 @@ from sqlalchemy.engine import create_engine
 from sqlalchemy import text, MetaData, Select, Table, select, Column, Integer, String, ForeignKey, Sequence
 from sqlalchemy.exc import IntegrityError, NoSuchTableError
 import os
+import plotly.express as px
 
 import logging
 import sys
@@ -22,6 +23,7 @@ logger.addHandler(handler)
 
 router = APIRouter()
 mode = os.environ.get("MODE")
+#TODO: Improve this part of the code, it currently only handles dev mode but it should also find a way to hide away thse variables at code run
 if mode == "dev":
     sql_alchemy_postgres_user = os.environ.get("PG_USER")
     sql_alchemy_postgres_password = os.environ.get("PG_PASSWORD")
@@ -29,6 +31,8 @@ if mode == "dev":
     sql_alchemy_postgres_port = os.environ.get("PG_PORT")
     sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
     sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
+    logger.error(f"{sql_alchemy_postgres_db}")
+    logging.error(f"{sql_alchemy_postgres_db}")
 else:
     pass
 
@@ -109,3 +113,10 @@ async def get_list_tables():
         raise HTTPException(status_code=404, detail="Table not found")
     except Exception as e:
         raise HTTPException(status_code=500, detail=str(e))
+
+@router.get("/tables/visual-price/{item_ticker}")
+async def get_visual_price_item(item_ticker: str,
+                                data_focus: str = "bids"):
+    item_ticker = item_ticker.upper()
+
+    return None

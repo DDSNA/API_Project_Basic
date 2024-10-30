@@ -19,11 +19,46 @@ import sys
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(sys.stdout)
 handler.setLevel(logging.DEBUG)
-formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s')
+formatter = logging.Formatter('%(asctime)s - %(name)s - %(levelname)s - %(message)s-%(lineno)d')
 handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 router = APIRouter()
+
+
+def cleanup_processed_files():
+    """
+    Cleanup processed files
+    :return:
+    """
+    try:
+        for file in os.listdir('./processed'):
+            os.remove(f'./processed/{file}')
+        logging.info(f"Cleaned up processed files at {datetime.datetime.now()}")
+        return True
+    except Exception as e:
+        logging.error(f"Error in cleanup: {e}")
+        return False
+
+
+def load_data(filename) -> pd.DataFrame:
+    """
+    Load data from a file, must contain file extension
+    EX: file.csv
+    :param filename:
+    :return:
+    """
+    logging.info(f"Loading data from {filename} at {datetime.datetime.now()}")
+    file_type = filename.split('.')[-1]
+    logging.info(f"During loading, file type is {file_type}, the current directory is {os.getcwd()}")
+    data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../{file_type}/{filename}'))
+    logging.info(f"Data path: {data_path}")
+    logging.warning(f"Checking if path exists {os.path.exists(data_path)}, at {os.getcwd()}")
+    data = pd.read_csv(data_path)
+    print(data.head())
+    print(data.info())
+    logging.info(f"Data finished loading from {filename} at {datetime.datetime.now()}")
+    return data
 
 
 # noinspection PyPackageRequirements
@@ -55,7 +90,11 @@ async def get_visual_report(item_ticker: str,
     try:
         data_focus = data_focus.lower()
         logger.info(f"Data focus: {data_focus}")
-        os.mkdir(f"./images")
+        try:
+            os.mkdir(f"./images")
+        except Exception as e:
+            logger.warning(f"{e}, ./images exists")
+            pass
         if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
             logging.info(
                 f"Path status of path is {os.path.exists(f'./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png')}")
@@ -67,6 +106,7 @@ async def get_visual_report(item_ticker: str,
     except Exception as e:
         logger.error(f"Error reading image: {e}")
         logger.warning(f"Current working directory: {os.getcwd()}")
+        logger.warning(f"")
         cleanup_processed_files()
         raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
 
@@ -81,26 +121,6 @@ async def get_visual_report(item_ticker: str,
         logger.error(f"Error reading image: {e}")
         cleanup_processed_files()
         raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
-
-
-def load_data(filename) -> pd.DataFrame:
-    """
-    Load data from a file, must contain file extension
-    EX: file.csv
-    :param filename:
-    :return:
-    """
-    logging.info(f"Loading data from {filename} at {datetime.datetime.now()}")
-    file_type = filename.split('.')[-1]
-    logging.info(f"During loading, file type is {file_type}, the current directory is {os.getcwd()}")
-    data_path = os.path.abspath(os.path.join(os.path.dirname(__file__), f'../{file_type}/{filename}'))
-    logging.info(f"Data path: {data_path}")
-    logging.warning(f"Checking if path exists {os.path.exists(data_path)}, at {os.getcwd()}")
-    data = pd.read_csv(data_path)
-    print(data.head())
-    print(data.info())
-    logging.info(f"Data finished loading from {filename} at {datetime.datetime.now()}")
-    return data
 
 
 async def create_plots(array: list, array_tickers: list):
@@ -278,23 +298,8 @@ async def create_plots(array: list, array_tickers: list):
         return False
 
 
-def cleanup_processed_files():
-    """
-    Cleanup processed files
-    :return:
-    """
-    try:
-        for file in os.listdir('./processed'):
-            os.remove(f'./processed/{file}')
-        logging.info(f"Cleaned up processed files at {datetime.datetime.now()}")
-        return True
-    except Exception as e:
-        logging.error(f"Error in cleanup: {e}")
-        return False
-
-
-@router.get("/reports/initialize", tags=['functional', 'prun'], status_code=200, deprecated=True)
-async def initialize_tables():
+@router.get("/reports/{initialize}", tags=['functional', 'prun'], status_code=200)
+async def initialize_tables(refresh: bool = False):
     """
     Not functional yet - in testing
     :return:
@@ -321,8 +326,8 @@ async def initialize_tables():
             tables_list = tables['table_name'].tolist()
             tables_list.sort()
 
-            preffered_file_types = ['csv', 'parquet']
-            for file_type in preffered_file_types:
+            preferred_file_types = ['csv', 'parquet']
+            for file_type in preferred_file_types:
                 if os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}'))):
                     logging.info(f"Directory {file_type} exists, returning {os.path.exists(f'./{file_type}')}")
                     pass
