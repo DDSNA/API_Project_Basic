@@ -40,17 +40,25 @@ async def initialize_tables(refresh: bool = False):
         sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
         sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
         logger.warning(f"Current working directory: {os.getcwd()}")
+        logger.warning(
+            f"""
+            {sql_alchemy_postgres_db}, {sql_alchemy_postgres_password}, {sql_alchemy_postgres_port}, 
+            {sql_alchemy_postgres_user}, {sql_alchemy_postgres_schema}, {sql_alchemy_postgres_host}
+            """
+        )
     except Exception as e:
         logger.error(f"Error getting environment variables: {e}")
         logger.warning(f"Current working directory: {os.getcwd()}")
         raise HTTPException(status_code=500, detail="Error getting environment variables")
     try:
         engine = create_engine(
-            f"postgresql://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
+            f"postgresql+psycopg2://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
         with engine.connect() as connection:
             query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'prun_data'"
             tables = pd.read_sql(query, engine)
             tables_list = tables['table_name'].tolist()
+            # tables_list :list[str] = [""]
+            logger.warning(f"{tables_list}")
             tables_list.sort()
 
             preferred_file_types = ['csv', 'parquet']
@@ -77,6 +85,7 @@ async def initialize_tables(refresh: bool = False):
         logging.info("Successfuly initialized data")
     except Exception as e:
         logger.error(f"Error reading tables: {e}")
+        logger.warning(f"{tables_list}")
         raise HTTPException(status_code=500, detail="Error reading tables")
 
     return {"message": "Data initialized successfully"}
