@@ -85,7 +85,6 @@ async def initialize_tables(refresh: bool = False):
         logging.info("Successfuly initialized data")
     except Exception as e:
         logger.error(f"Error reading tables: {e}")
-        logger.warning(f"{tables_list}")
         raise HTTPException(status_code=500, detail="Error reading tables")
 
     return {"message": "Data initialized successfully"}
