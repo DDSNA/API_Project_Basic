@@ -16,7 +16,6 @@ import matplotlib.pyplot as plt
 import logging
 import sys
 
-
 #logging
 logger = logging.getLogger(__name__)
 handler = logging.StreamHandler(sys.stdout)
@@ -63,7 +62,7 @@ def load_data(filename) -> pd.DataFrame:
     return data
 
 
-async def create_plots(array: list, array_tickers: list):
+def create_plots(array: list, array_tickers: list):
     """
     Create plots for the data, based on the processed tables located in ./processed
 
@@ -239,7 +238,7 @@ async def create_plots(array: list, array_tickers: list):
         return False
 
 
-@router.get("/reports/initialize", tags=['functional', 'prun'], status_code=200)
+@router.get("/reports/initialize", tags=['functional', 'prun'], status_code=200, include_in_schema=False)
 async def initialize_tables(refresh: bool = False):
     """
     Not functional yet - in testing
@@ -288,7 +287,7 @@ async def initialize_tables(refresh: bool = False):
             for table_name in tables_list:
                 try:
                     logging.info(f"Reading table: {table_name}")
-                    df = pd.DataFrame(pd.read_sql(f'SELECT * FROM prun_data."{table_name}";', engine))
+                    df = pd.DataFrame(pd.read_sql(f'SELECT * FROM prun_data."{table_name}" LIMIT 500;', engine))
                     logging.info(f"Table {table_name} read")
                     df.to_csv(f"./csv/{table_name}.csv", index=False)
                     df.to_parquet(f"./parquet/{table_name}.parquet", index=False, engine='pyarrow')
@@ -332,7 +331,19 @@ async def get_visual_report(item_ticker: str,
     item_ticker = item_ticker.upper()
     current_dir = Path.cwd()
     for item in current_dir.iterdir():
-        logger.error(item.name)
+        logger.info(item.name)
+
+    try:
+        if refresh:
+            logger.info(f"Current working directory: {os.getcwd()} before delivering image")
+            cleanup_processed_files()
+            create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
+            return FileResponse(f"./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png",
+                                media_type="image/png")
+    except Exception as e:
+        logger.error(f"Error reading image: {e}")
+        cleanup_processed_files()
+        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
     try:
         # TODO: CHECK WHY THE IMAGES FOLDER IS NOT USED FOR PNG GENERATION THEN REPLACE PROCESSED WITH IMAGES PATH
         data_focus = data_focus.lower()
@@ -346,28 +357,14 @@ async def get_visual_report(item_ticker: str,
             logger.info(
                 f"Path status of path is {os.path.exists(f'./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png')}")
             logger.warning(f"{Path.cwd()}")
-            logger.warning(f"{Path("processed")}")
-            return FileResponse(f"./{item_ticker}-temporary_df_hold_{data_focus}.csv.png",
-                                     media_type="image/png")
+            logger.warning(f"{Path(f"Path already existed for {data_focus} {item_ticker}, therefore")}")
+            return FileResponse(f"./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png",
+                                media_type="image/png")
         else:
-            await create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
+            create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
     except Exception as e:
         logger.error(f"Error reading image: {e}")
         logger.warning(f"Current working directory: {os.getcwd()}")
         logger.warning(f"")
-        cleanup_processed_files()
-        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
-
-    try:
-        if refresh:
-            logger.warning(f"Current working directory: {os.getcwd()} before delivering image")
-            cleanup_processed_files()
-            await create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
-            return FileResponse(f"./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png",
-                                     media_type="image/png")
-        return FileResponse(f"./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png",
-                                 media_type="image/png")
-    except Exception as e:
-        logger.error(f"Error reading image: {e}")
         cleanup_processed_files()
         raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
