@@ -287,7 +287,7 @@ async def initialize_tables(refresh: bool = False):
             for table_name in tables_list:
                 try:
                     logging.info(f"Reading table: {table_name}")
-                    df = pd.DataFrame(pd.read_sql(f'SELECT * FROM prun_data."{table_name}" LIMIT 500;', engine))
+                    df = pd.DataFrame(pd.read_sql(f'SELECT * FROM prun_data."{table_name}";', engine))
                     logging.info(f"Table {table_name} read")
                     df.to_csv(f"./csv/{table_name}.csv", index=False)
                     df.to_parquet(f"./parquet/{table_name}.parquet", index=False, engine='pyarrow')
