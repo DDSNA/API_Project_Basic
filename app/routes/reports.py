@@ -3,17 +3,19 @@ import datetime
 import pandas as pd
 import sqlalchemy
 from fastapi import HTTPException
-from fastapi.responses import StreamingResponse
+from fastapi.responses import FileResponse
 from fastapi.routing import APIRouter
 from sqlalchemy.engine import create_engine
 from sqlalchemy import text, MetaData, Select, Table, select, Column, Integer, String, ForeignKey, Sequence
 from sqlalchemy.exc import IntegrityError, NoSuchTableError
+from pathlib import Path
 import os
 
 import seaborn as sns
 import matplotlib.pyplot as plt
 import logging
 import sys
+
 
 #logging
 logger = logging.getLogger(__name__)
@@ -24,70 +26,6 @@ handler.setFormatter(formatter)
 logger.addHandler(handler)
 
 router = APIRouter()
-
-@router.get("/reports/{initialize}", tags=['functional', 'prun'], status_code=200)
-async def initialize_tables(refresh: bool = False):
-    """
-    Not functional yet - in testing
-    :return:
-    """
-    try:
-        mode = os.environ.get("MODE")
-        sql_alchemy_postgres_user = os.environ.get("PG_USER")
-        sql_alchemy_postgres_password = os.environ.get("PG_PASSWORD")
-        sql_alchemy_postgres_host = os.environ.get("PG_INTERNAL_DOMAIN")
-        sql_alchemy_postgres_port = os.environ.get("PG_INTERNAL_PORT")
-        sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
-        sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
-        logger.warning(f"Current working directory: {os.getcwd()}")
-        logger.warning(
-            f"""
-            {sql_alchemy_postgres_db}, {sql_alchemy_postgres_password}, {sql_alchemy_postgres_port}, 
-            {sql_alchemy_postgres_user}, {sql_alchemy_postgres_schema}, {sql_alchemy_postgres_host}
-            """
-        )
-    except Exception as e:
-        logger.error(f"Error getting environment variables: {e}")
-        logger.warning(f"Current working directory: {os.getcwd()}")
-        raise HTTPException(status_code=500, detail="Error getting environment variables")
-    try:
-        engine = create_engine(
-            f"postgresql+psycopg2://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
-        with engine.connect() as connection:
-            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'prun_data'"
-            tables = pd.read_sql(query, engine)
-            tables_list = tables['table_name'].tolist()
-            # tables_list :list[str] = [""]
-            logger.warning(f"{tables_list}")
-            tables_list.sort()
-
-            preferred_file_types = ['csv', 'parquet']
-            for file_type in preferred_file_types:
-                if os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}'))):
-                    logging.info(f"Directory {file_type} exists, returning {os.path.exists(f'./{file_type}')}")
-                    pass
-                else:
-                    logging.warning(f"Creating directory {file_type}")
-                    os.mkdir(f"{file_type}")
-                    os.mkdir(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}')))
-            logging.info(f"Reading tables: {tables_list}")
-            for table_name in tables_list:
-                try:
-                    logging.info(f"Reading table: {table_name}")
-                    df = pd.DataFrame(pd.read_sql(f'SELECT * FROM prun_data."{table_name}";', engine))
-                    logging.info(f"Table {table_name} read")
-                    df.to_csv(f"./csv/{table_name}.csv", index=False)
-                    df.to_parquet(f"./parquet/{table_name}.parquet", index=False, engine='pyarrow')
-                except Exception as e:
-                    logging.error(f"Error reading table: {table_name} with error: {e}")
-                    continue
-
-        logging.info("Successfuly initialized data")
-    except Exception as e:
-        logger.error(f"Error reading tables: {e}")
-        raise HTTPException(status_code=500, detail="Error reading tables")
-
-    return {"message": "Data initialized successfully"}
 
 
 def cleanup_processed_files():
@@ -123,68 +61,6 @@ def load_data(filename) -> pd.DataFrame:
     print(data.info())
     logging.info(f"Data finished loading from {filename} at {datetime.datetime.now()}")
     return data
-
-
-# noinspection PyPackageRequirements
-@router.get("/reports/{item_ticker}", tags=['functional', 'prun'], status_code=200)
-async def get_visual_report(item_ticker: str,
-                            refresh: bool,
-                            data_focus: str = "bids"):
-    """
-    Function in charge of getting tables. Use the ticker name to get the the appropriate image
-    :param item_ticker:
-    :param refresh:
-    :param data_focus:
-    :return:
-    """
-    try:
-        mode = os.environ.get("MODE")
-        sql_alchemy_postgres_user = os.environ.get("PG_USER")
-        sql_alchemy_postgres_password = os.environ.get("PG_PASSWORD")
-        sql_alchemy_postgres_host = os.environ.get("PG_INTERNAL_DOMAIN")
-        sql_alchemy_postgres_port = os.environ.get("PG_INTERNAL_PORT")
-        sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
-        sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
-        logger.warning(f"Current working directory: {os.getcwd()}")
-    except Exception as e:
-        logger.error(f"Error getting environment variables: {e}")
-        logger.warning(f"Current working directory: {os.getcwd()}")
-        raise HTTPException(status_code=500, detail="Error getting environment variables")
-    item_ticker = item_ticker.upper()
-    try:
-        data_focus = data_focus.lower()
-        logger.info(f"Data focus: {data_focus}")
-        try:
-            os.mkdir(f"./images")
-        except Exception as e:
-            logger.warning(f"{e}, ./images exists")
-            pass
-        if os.path.exists(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png"):
-            logging.info(
-                f"Path status of path is {os.path.exists(f'./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png')}")
-            return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
-                                     media_type="image/png")
-        else:
-            await create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
-            pass
-    except Exception as e:
-        logger.error(f"Error reading image: {e}")
-        logger.warning(f"Current working directory: {os.getcwd()}")
-        logger.warning(f"")
-        cleanup_processed_files()
-        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
-
-    try:
-        if refresh:
-            logger.warning(f"Current working directory: {os.getcwd()}")
-            cleanup_processed_files()
-            await create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
-        return StreamingResponse(f"./images/{item_ticker}-temporary_df_hold_{data_focus}_csv.png",
-                                 media_type="image/png")
-    except Exception as e:
-        logger.error(f"Error reading image: {e}")
-        cleanup_processed_files()
-        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
 
 
 async def create_plots(array: list, array_tickers: list):
@@ -231,6 +107,7 @@ async def create_plots(array: list, array_tickers: list):
 
                 grouped: pd.Series = df.groupby(['Date', 'ExchangeCode', 'MaterialTicker'])['ItemCount'].sum()
                 grouped: pd.DataFrame = grouped.to_frame()
+                logger.info(f"{os.curdir}")
                 grouped.to_csv(f'./processed/{material_ticker_filter}-{df_name}-simplified_grouped.csv')
                 df['Total Available'] = grouped['ItemCount'].sum()
                 logging.info(f"Grouped data for {material_ticker_filter} at {datetime.datetime.now()}")
@@ -362,3 +239,135 @@ async def create_plots(array: list, array_tickers: list):
         return False
 
 
+@router.get("/reports/initialize", tags=['functional', 'prun'], status_code=200)
+async def initialize_tables(refresh: bool = False):
+    """
+    Not functional yet - in testing
+    :return:
+    """
+    try:
+        mode = os.environ.get("MODE")
+        sql_alchemy_postgres_user = os.environ.get("PG_USER")
+        sql_alchemy_postgres_password = os.environ.get("PG_PASSWORD")
+        sql_alchemy_postgres_host = os.environ.get("PG_INTERNAL_DOMAIN")
+        sql_alchemy_postgres_port = os.environ.get("PG_INTERNAL_PORT")
+        sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
+        sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
+        logger.warning(f"Current working directory: {os.getcwd()}")
+        logger.warning(
+            f"""
+            {sql_alchemy_postgres_db}, {sql_alchemy_postgres_password}, {sql_alchemy_postgres_port}, 
+            {sql_alchemy_postgres_user}, {sql_alchemy_postgres_schema}, {sql_alchemy_postgres_host}
+            """
+        )
+    except Exception as e:
+        logger.error(f"Error getting environment variables: {e}")
+        logger.warning(f"Current working directory: {os.getcwd()}")
+        raise HTTPException(status_code=500, detail="Error getting environment variables")
+    try:
+        engine = create_engine(
+            f"postgresql+psycopg2://{sql_alchemy_postgres_user}:{sql_alchemy_postgres_password}@{sql_alchemy_postgres_host}:{sql_alchemy_postgres_port}/{sql_alchemy_postgres_db}")
+        with engine.connect() as connection:
+            query = "SELECT table_name FROM information_schema.tables WHERE table_schema = 'prun_data'"
+            tables = pd.read_sql(query, engine)
+            tables_list = ["temporary_df_hold_bids", "temporary_df_hold_orders"]
+            # tables_list :list[str] = [""]
+            logger.warning(f"{tables_list}")
+            tables_list.sort()
+
+            preferred_file_types = ['csv', 'parquet']
+            for file_type in preferred_file_types:
+                if os.path.exists(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}'))):
+                    logging.info(f"Directory {file_type} exists, returning {os.path.exists(f'./{file_type}')}")
+                    pass
+                else:
+                    logging.warning(f"Creating directory {file_type}")
+                    os.mkdir(f"{file_type}")
+                    os.mkdir(os.path.abspath(os.path.join(os.path.dirname(__file__), f'{file_type}')))
+            logging.info(f"Reading tables: {tables_list}")
+            for table_name in tables_list:
+                try:
+                    logging.info(f"Reading table: {table_name}")
+                    df = pd.DataFrame(pd.read_sql(f'SELECT * FROM prun_data."{table_name}";', engine))
+                    logging.info(f"Table {table_name} read")
+                    df.to_csv(f"./csv/{table_name}.csv", index=False)
+                    df.to_parquet(f"./parquet/{table_name}.parquet", index=False, engine='pyarrow')
+                except Exception as e:
+                    logging.error(f"Error reading table: {table_name} with error: {e}")
+                    continue
+
+        logging.info("Successfuly initialized data")
+    except Exception as e:
+        logger.error(f"Error reading tables: {e}")
+        raise HTTPException(status_code=500, detail="Error reading tables")
+
+    return {"message": "Data initialized successfully"}
+
+
+# noinspection PyPackageRequirements
+@router.get("/reports/{item_ticker}", tags=['functional', 'prun'], status_code=200)
+async def get_visual_report(item_ticker: str,
+                            refresh: bool,
+                            data_focus: str = "bids"):
+    """
+    Function in charge of getting tables. Use the ticker name to get the the appropriate image
+    :param item_ticker:
+    :param refresh:
+    :param data_focus:
+    :return:
+    """
+    try:
+        mode = os.environ.get("MODE")
+        sql_alchemy_postgres_user = os.environ.get("PG_USER")
+        sql_alchemy_postgres_password = os.environ.get("PG_PASSWORD")
+        sql_alchemy_postgres_host = os.environ.get("PG_INTERNAL_DOMAIN")
+        sql_alchemy_postgres_port = os.environ.get("PG_INTERNAL_PORT")
+        sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
+        sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
+        logger.warning(f"Current working directory: {os.getcwd()}")
+    except Exception as e:
+        logger.error(f"Error getting environment variables: {e}")
+        logger.warning(f"Current working directory: {os.getcwd()}")
+        raise HTTPException(status_code=500, detail="Error getting environment variables")
+    item_ticker = item_ticker.upper()
+    current_dir = Path.cwd()
+    for item in current_dir.iterdir():
+        logger.error(item.name)
+    try:
+        # TODO: CHECK WHY THE IMAGES FOLDER IS NOT USED FOR PNG GENERATION THEN REPLACE PROCESSED WITH IMAGES PATH
+        data_focus = data_focus.lower()
+        logger.warning(f"Data focus: {data_focus}")
+        try:
+            os.mkdir(f"./images")
+        except Exception as e:
+            logger.warning(f"{e}, ./images exists")
+            pass
+        if os.path.exists(f"./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png"):
+            logger.info(
+                f"Path status of path is {os.path.exists(f'./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png')}")
+            logger.warning(f"{Path.cwd()}")
+            logger.warning(f"{Path("processed")}")
+            return FileResponse(f"./{item_ticker}-temporary_df_hold_{data_focus}.csv.png",
+                                     media_type="image/png")
+        else:
+            await create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
+    except Exception as e:
+        logger.error(f"Error reading image: {e}")
+        logger.warning(f"Current working directory: {os.getcwd()}")
+        logger.warning(f"")
+        cleanup_processed_files()
+        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
+
+    try:
+        if refresh:
+            logger.warning(f"Current working directory: {os.getcwd()} before delivering image")
+            cleanup_processed_files()
+            await create_plots([f"temporary_df_hold_{data_focus}.csv"], [item_ticker])
+            return FileResponse(f"./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png",
+                                     media_type="image/png")
+        return FileResponse(f"./processed/{item_ticker}-temporary_df_hold_{data_focus}.csv.png",
+                                 media_type="image/png")
+    except Exception as e:
+        logger.error(f"Error reading image: {e}")
+        cleanup_processed_files()
+        raise HTTPException(status_code=500, detail=f"Error reading image for {item_ticker}")
