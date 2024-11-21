@@ -253,12 +253,7 @@ async def initialize_tables(refresh: bool = False):
         sql_alchemy_postgres_db = os.environ.get("PG_DATABASE")
         sql_alchemy_postgres_schema = os.environ.get("PG_SCHEMA")
         logger.warning(f"Current working directory: {os.getcwd()}")
-        logger.warning(
-            f"""
-            {sql_alchemy_postgres_db}, {sql_alchemy_postgres_password}, {sql_alchemy_postgres_port}, 
-            {sql_alchemy_postgres_user}, {sql_alchemy_postgres_schema}, {sql_alchemy_postgres_host}
-            """
-        )
+
     except Exception as e:
         logger.error(f"Error getting environment variables: {e}")
         logger.warning(f"Current working directory: {os.getcwd()}")
