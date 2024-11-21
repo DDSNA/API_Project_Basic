@@ -16,6 +16,7 @@ from fastapi import FastAPI, HTTPException, WebSocketException, status, Response
 from fastapi.responses import RedirectResponse
 from fastapi.openapi.utils import get_openapi
 from fastapi.security import OAuth2PasswordBearer
+# import redis
 
 # routes imports, routes is a fast api module that should contain a file named tables.py where a router is defined
 from routes import tables, users, reports
@@ -41,6 +42,10 @@ stream_handler = logging.StreamHandler()
 stream_handler.setFormatter(formatter)
 logger.addHandler(stream_handler)
 
+#TODO: Update this to internal railway network when releasing
+
+# rd = redis.Redis(host='localhost', port=6379, db=0)
+
 
 ### OPEN API SCHEMA CUSTOMIZATION
 def custom_openapi():
@@ -57,7 +62,7 @@ def custom_openapi():
         Currently the data is saved as a string from a dataframe for all csv endpoints of https://doc.fnar.net.
         Only through their graceful contribution were my skills honed and possible at all, so I thank them and you should check out their work if you can!""",
         routes=app.routes,
-        contact={'name': 'Maintainer', 'email':'hello@danserban.ro', 'url':'https://danserban.ro'}
+        contact={'name': 'Maintainer', 'email': 'hello@danserban.ro', 'url': 'https://danserban.ro'}
     )
     openapi_schema["info"]["x-logo"] = {
         "url": "https://upload.wikimedia.org/wikiversity/en/8/8c/FastAPI_logo.png"
@@ -102,7 +107,7 @@ async def update_database(request_json: str = '{"type":"update db"}',
                             detail="There is an issue with the cloud function call - may not be reachable")
 
 
-@app.get("/ping/otherwebsite", status_code=status.HTTP_200_OK, tags=['prun','debug'], deprecated=True)
+@app.get("/ping/otherwebsite", status_code=status.HTTP_200_OK, tags=['prun', 'debug'], deprecated=True)
 async def ping(website: str = "eve.danserban.ro"):
     try:
         r = httpx.get('https://' + website)
@@ -259,7 +264,6 @@ async def save_current_prun_orders_volume(response: Response):
         response.status_code = status.HTTP_500_INTERNAL_SERVER_ERROR
         raise Exception
 
-
 # Database querying gets
 # @app.get("/prun/company_list", tags=['azure', 'not functional'])
 # async def get_company_list(token: Annotated[str, Depends(oauth2_scheme)]):
@@ -295,11 +299,3 @@ async def save_current_prun_orders_volume(response: Response):
 #         logger.error(f"Error while uploading file to azure storage: {e} (uploading)")
 #         data.close()
 #         return {"error": str(e)}
-
-
-
-
-
-
-
-
