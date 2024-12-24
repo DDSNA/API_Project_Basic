@@ -239,7 +239,7 @@ def create_plots(array: list, array_tickers: list):
 
 
 @router.get("/reports/initialize", tags=['functional', 'prun'], status_code=200, include_in_schema=False)
-async def initialize_tables(refresh: bool = False):
+async def initialize_tables():
     """
     Not functional yet - in testing
     :return:
